@@ -19,9 +19,9 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 - Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
 - Windows launcher scripts, offline tests, and a GitHub Actions quality-check workflow.
 
-## Release candidate: v4.1.0 (not yet published)
+## Release candidate: v4.1.0-rc1 (not yet published)
 
-Version 4.1.0 is the intended first formal release, but it has not been published as a GitHub Release yet. The repository contains the source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
+Version 4.1.0-rc1 is the release candidate for the planned v4.1.0 release. It has not been published as a GitHub Release or tagged yet. The repository contains the source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
 
 The default `INR=X` series is a Yahoo Finance USD/INR proxy and may not match an official reference rate or an executable quote. Data providers can change schemas, revise history, or become unavailable. Review the configured target definition and data-quality warnings before interpreting any result.
 
