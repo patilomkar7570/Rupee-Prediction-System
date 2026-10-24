@@ -8,7 +8,7 @@ This repository is a local-first USD/INR forecasting research workbench. Softwar
 
 The GitHub Actions workflow in `.github/workflows/tests.yml` runs on Ubuntu and Windows with Python 3.11 and 3.12. It compiles Python modules, checks the dashboard JavaScript syntax with Node.js, runs the unit and API smoke-test suite, and checks that required release files and the `VERSION` file are present.
 
-The committed test suite includes deterministic checks for target construction, point-in-time timestamp handling, reference-rate CSV validation, moving-block bootstrap helpers, and basic API/dashboard routes. Consult the repository's **Actions** tab for the latest CI result.
+The committed test suite includes deterministic checks for target construction, point-in-time timestamp handling, reference-rate CSV validation, moving-block bootstrap helpers, basic API/dashboard routes, data-quality blocking cases, and prospective shadow-forecast recording/scoring. Consult the repository's **Actions** tab for the latest CI result. The release gate also checks the dashboard JavaScript syntax when Node.js is installed locally.
 
 ## Not established by automated checks
 
