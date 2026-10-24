@@ -1,4 +1,4 @@
-# Roadmap — v4.1.0
+# Roadmap — v4.1.0-rc1
 
 This is a research workbench, not a validated trading product. Status describes software implementation, not proof of real-world forecast skill.
 
