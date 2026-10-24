@@ -17,45 +17,56 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 - Point-in-time and data-quality checks, including stale or incomplete target history.
 - Optional user-supplied USD/INR reference-rate CSVs and a configurable target definition.
 - Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
-- Windows launcher scripts and offline tests.
+- Windows launcher scripts, offline tests, and a GitHub Actions quality-check workflow.
 
-## Current release
+## Current release: v4.1.0
 
-This repository is being prepared for **v4.1.0**. The release package's offline checks cover application code paths and synthetic test cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
+This repository contains the v4.1.0 source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
 
 The default `INR=X` series is a Yahoo Finance USD/INR proxy and may not match an official reference rate or an executable quote. Data providers can change schemas, revise history, or become unavailable. Review the configured target definition and data-quality warnings before interpreting any result.
+
+Read [CHANGELOG.md](CHANGELOG.md) for release notes, [SOURCES.md](SOURCES.md) for source limitations, [ROADMAP.md](ROADMAP.md) for open validation work, and [VALIDATION.md](VALIDATION.md) for what has and has not been verified.
 
 ## Quick start (Windows 10/11)
 
 The release requires Python 3.11 or 3.12.
 
-1. Obtain the complete project source and extract it into a new folder.
+1. Download the repository using GitHub's **Code → Download ZIP**, then extract it into a new folder.
 2. Open the extracted folder.
 3. Run `launch_windows.bat`.
 4. Allow the first launch to install the dependencies listed in `requirements.txt`.
 5. In the dashboard, refresh the data and inspect source health and the data-quality / point-in-time audit before running forecasts.
 
-Keep the local backend terminal open while using the dashboard. The development server is intended to bind to loopback only; do not expose it directly to a public network.
+Keep the local backend terminal open while using the dashboard. The development server is configured to bind to loopback only; do not expose it directly to a public network.
 
 ## Validation
 
 Run the offline checks from the project folder:
 
 ```powershell
-python -m compileall -q backend tests
-python -m unittest discover -s tests -v
+run_release_checks.bat
 ```
 
-These tests verify software behavior, not real-world predictive accuracy. For live-market evaluation, use the project's real-data validation workflow and review its coverage, data freshness, target definition, baseline metrics, and uncertainty intervals.
+Or run the core checks from an activated Python environment:
+
+```powershell
+python -m compileall -q backend tests
+python -m unittest discover -s tests -v
+node --check frontend/app.js
+```
+
+To download market history and run a real-data walk-forward evaluation, run `run_real_market_validation.bat`. This requires internet access and may take several minutes. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
+
+Software tests verify implementation behavior; they do not prove real-world predictive accuracy.
 
 ## Project layout
 
 - `backend/` — data collection, features, models, evaluation, API, monitoring, and operations.
 - `frontend/` — browser dashboard.
 - `data/` — blank input templates only.
-- `runtime/` — local data, reports, logs, inputs, and shadow forecasts created at runtime; these should not be committed.
-- `tests/` — offline tests using synthetic fixtures.
-- `.github/workflows/` — CI workflow.
+- `runtime/` — local data, reports, logs, inputs, and shadow forecasts created at runtime; these are excluded from Git.
+- `tests/` — offline tests, including API smoke checks.
+- `.github/workflows/` — CI quality checks across Windows/Linux and supported Python versions.
 
 ## Data and security hygiene
 
