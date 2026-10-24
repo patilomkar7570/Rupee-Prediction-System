@@ -59,7 +59,7 @@ jobs:
           mkdir -p dist
           archive="Rupee-Prediction-System-v4.1.0-rc1.zip"
           git archive --format=zip --prefix="Rupee-Prediction-System-v4.1.0-rc1/" HEAD -o "dist/$archive"
-          sha256sum "dist/$archive" > dist/SHA256SUMS.txt
+          (cd dist && sha256sum "$archive" > SHA256SUMS.txt)
       - name: Verify release archive contents
         run: |
           python - <<'PY'
