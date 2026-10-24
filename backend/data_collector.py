@@ -55,7 +55,7 @@ MACRO_COLUMNS: Final[list[str]] = [
 ]
 
 HEADERS: Final[dict[str, str]] = {
-    "User-Agent": "RupeePredictionResearch/4.0 (local educational research app)",
+    "User-Agent": "RupeePredictionResearch/4.1.0-rc1 (local educational research app)",
     "Accept": "text/csv,application/vnd.ms-excel,application/octet-stream,*/*",
 }
 
@@ -277,8 +277,8 @@ def _fetch_gpr(start_date: str) -> pd.Series:
 def _read_manual_macro_inputs() -> tuple[pd.DataFrame, dict[str, object]]:
     """Read manual macro data with conservative daily availability mapping.
 
-    \`Date\` should be the first known/effective date, not the period-end described by the value.
-    When \`AvailableAt\` is populated, it is parsed in Asia/Kolkata (naive timestamps are assumed
+    `Date` should be the first known/effective date, not the period-end described by the value.
+    When `AvailableAt` is populated, it is parsed in Asia/Kolkata (naive timestamps are assumed
     IST), and values released after the 17:00 IST research cutoff are made available next weekday.
     Invalid, non-empty timestamps cause that row's feature values to be excluded rather than
     silently falling back to its reference date. Rows that share an effective date are merged by
@@ -365,7 +365,7 @@ def _read_manual_macro_inputs() -> tuple[pd.DataFrame, dict[str, object]]:
 def _asof_reindex(series: pd.Series, calendar: pd.DatetimeIndex, max_age_days: int | None = None) -> pd.Series:
     """Carry a value to dates on/after its release date without filling earlier dates.
 
-    Also preserves weekend/holiday releases, which a simple \`reindex(calendar)\` would drop.
+    Also preserves weekend/holiday releases, which a simple `reindex(calendar)` would drop.
     Optional max_age_days makes slowly updated trade/flow inputs expire instead of appearing fresh.
     """
     source = pd.to_numeric(series, errors="coerce").dropna().sort_index()
