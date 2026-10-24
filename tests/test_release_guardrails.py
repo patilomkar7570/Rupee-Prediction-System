@@ -10,12 +10,39 @@ import pandas as pd
 
 from backend.data_quality import audit_market_data
 from backend.shadow_forecasts import record_shadow_forecast, evaluate_shadow_forecasts
+from backend.validate_real_data import validate_target_freshness
 
 
 def make_prices(rows: int = 420, end: str = "2026-10-23") -> pd.DataFrame:
     index = pd.date_range(end=end, periods=rows, freq="B")
     values = np.linspace(82.0, 88.0, rows)
     return pd.DataFrame({"USDINR": values}, index=index)
+
+
+
+class TargetFreshnessGateTests(unittest.TestCase):
+    def test_recent_target_is_accepted_and_audited(self) -> None:
+        prices = make_prices(rows=10, end="2026-10-23")
+        result = validate_target_freshness(prices, now=pd.Timestamp("2026-10-24T12:00:00Z"))
+        self.assertEqual(result["status"], "current")
+        self.assertEqual(result["latest_target_date"], "2026-10-23")
+        self.assertEqual(result["age_calendar_days"], 1)
+
+    def test_stale_target_is_rejected(self) -> None:
+        prices = make_prices(rows=10, end="2026-10-01")
+        with self.assertRaisesRegex(RuntimeError, "calendar days old"):
+            validate_target_freshness(prices, now=pd.Timestamp("2026-10-24T12:00:00Z"))
+
+    def test_future_dated_target_is_rejected(self) -> None:
+        prices = make_prices(rows=10, end="2026-10-27")
+        with self.assertRaisesRegex(RuntimeError, "in the future"):
+            validate_target_freshness(prices, now=pd.Timestamp("2026-10-24T12:00:00Z"))
+
+    def test_nonpositive_target_is_rejected(self) -> None:
+        prices = make_prices(rows=10)
+        prices.iloc[-1, prices.columns.get_loc("USDINR")] = 0.0
+        with self.assertRaisesRegex(RuntimeError, "non-positive"):
+            validate_target_freshness(prices, now=pd.Timestamp("2026-10-24T12:00:00Z"))
 
 
 class DataQualityGateTests(unittest.TestCase):
