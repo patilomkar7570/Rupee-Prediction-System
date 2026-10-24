@@ -1,0 +1,33 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+.DS_Store
+.vscode/
+.idea/
+
+# Everything created at runtime is intentionally excluded from Git.
+runtime/*
+!runtime/.gitkeep
+
+# Legacy output paths from older releases; never commit local market datasets.
+data/market_data.csv
+data/source_status.json
+data/backtest_results.json
+data/latest_daily_run.json
+*.log
+
+# Local archives and build outputs
+*.zip
+build/
+dist/

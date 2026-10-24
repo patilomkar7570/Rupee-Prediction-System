@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1324">
+  <title>Rupee Prediction System — Research Workbench</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="#top"><span class="brand-mark">₹</span><span>Rupee<span class="brand-light">Lab</span></span></a>
+      <p class="eyebrow">RESEARCH WORKBENCH</p>
+      <nav>
+        <a href="#overview">Overview</a><a href="#forecasts">Forecasts</a><a href="#evaluation">Evaluation</a>
+        <a href="#factors">Macro factors</a><a href="#quality">Data quality</a><a href="#sources">Sources</a>
+        <a href="#news">News context</a><a href="#shadow">Shadow ledger</a>
+      </nav>
+      <div class="sidebar-note"><span class="live-dot"></span> Local-first app<br><small>v4.1.0 · Experimental research</small></div>
+    </aside>
+    <main id="top">
+      <header class="topbar"><div><p class="eyebrow">INDIA FX · MACROECONOMICS</p><h1>Rupee Prediction System</h1><p class="subtitle">A research workbench for USD/INR, macro indicators and chronological model evaluation.</p></div><button id="theme-button" class="button ghost">Toggle theme</button></header>
+      <div id="toast" class="toast" role="status">Loading local workspace…</div>
+      <section class="section" id="overview">
+        <div class="section-title"><div><p class="eyebrow">CURRENT DATA</p><h2>Market overview</h2></div><button id="refresh-button" class="button primary">↻ Fetch / refresh data</button></div>
+        <div class="metrics">
+          <article class="metric hero"><span>USD / INR</span><strong id="usd-inr">—</strong><small id="rate-date">No data loaded</small></article>
+          <article class="metric"><span>Brent crude</span><strong id="brent">—</strong><small>USD / barrel proxy</small></article>
+          <article class="metric"><span>Gold</span><strong id="gold">—</strong><small>USD / troy ounce</small></article>
+          <article class="metric"><span>Dollar index</span><strong id="dxy">—</strong><small>Broad USD strength</small></article>
+          <article class="metric"><span>US 10Y yield</span><strong id="us10y">—</strong><small>Percent per year</small></article>
+          <article class="metric"><span>VIX</span><strong id="vix">—</strong><small>Global equity risk proxy</small></article>
+        </div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">PRICE HISTORY</p><h3>USD/INR history</h3></div><span id="history-label" class="pill">Waiting for data</span></div><div id="chart" class="chart"><div class="empty">Refresh market history to draw the chart.</div></div><p class="footnote">USD/INR rising means the rupee weakened against the US dollar. The target may be a proxy rather than an executable quote.</p></article>
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">MARKET CONTEXT</p><h3>Regime & target</h3></div></div><div id="regime" class="big-status">Not assessed</div><p id="regime-note" class="muted">Load data to assess available risk proxies.</p><hr><div class="field-row"><label for="target-source">USD/INR target definition</label><select id="target-source"><option value="yahoo_proxy">Yahoo Finance INR=X proxy</option><option value="fbil_csv">Imported FBIL/RBI-style CSV</option><option value="rbi_dbie_mirror">RBI DBIE historical table via mirror</option></select><button id="save-target" class="button secondary">Save</button></div><p id="target-note" class="footnote">Changing the target source requires refreshing data and rerunning evaluation.</p></article>
+        </div>
+      </section>
+      <section class="section" id="forecasts">
+        <div class="section-title"><div><p class="eyebrow">MODEL OUTPUT</p><h2>Multi-horizon forecasts</h2><p class="section-copy">The model may explicitly return “NO RELIABLE SIGNAL”. Estimates are experimental, not trading advice.</p></div><button id="predict-button" class="button primary" disabled>Run forecast</button></div>
+        <div id="forecast-grid" class="forecast-grid"><article class="forecast"><span>1 session</span><strong>—</strong><small>Run forecast to populate</small></article><article class="forecast"><span>5 sessions</span><strong>—</strong><small>Run forecast to populate</small></article><article class="forecast"><span>20 sessions</span><strong>—</strong><small>Run forecast to populate</small></article></div>
+        <div id="prediction-detail" class="panel"><p class="muted">Probability, model comparison, numerical-rate forecast and uncertainty details appear here.</p></div>
+        <p class="footnote">The offline test suite cannot establish real-market predictive skill. Check the data-source timing and model holdout results before interpreting a forecast.</p>
+      </section>
+      <section class="section" id="evaluation">
+        <div class="section-title"><div><p class="eyebrow">CHRONOLOGICAL TESTING</p><h2>Walk-forward evaluation</h2><p class="section-copy">Compare models with simple baselines; inspect sample sizes and uncertainty, not just headline scores.</p></div><button id="backtest-button" class="button secondary">Run backtest</button></div>
+        <div id="backtest-result" class="panel result-block"><p class="muted">Backtest not run in this session.</p></div>
+      </section>
+      <section class="section" id="factors">
+        <div class="section-title"><div><p class="eyebrow">TRANSPARENT HYPOTHESES</p><h2>Macro factors</h2><p class="section-copy">The heuristic pressure score is explanatory only; it does not force the model prediction.</p></div><button id="factor-button" class="button secondary" disabled>Run factor audit</button></div>
+        <div id="factor-result" class="panel result-block"><p class="muted">Refresh data, then run the factor audit.</p></div>
+      </section>
+      <section class="section" id="quality">
+        <div class="section-title"><div><p class="eyebrow">RELEASE GATE</p><h2>Data quality & point-in-time audit</h2><p class="section-copy">Checks report risks; they do not silently change observations or certify forecasting skill.</p></div><button id="quality-button" class="button secondary">Run audit</button></div>
+        <div id="quality-result" class="panel result-block"><p class="muted">Audit not run in this session.</p></div>
+      </section>
+      <section class="section" id="sources">
+        <div class="section-title"><div><p class="eyebrow">PROVENANCE</p><h2>Data-source health</h2><p class="section-copy">Optional public sources can fail, change schemas, revise history, or lag.</p></div></div>
+        <div id="source-result" class="panel result-block"><p class="muted">Source status will appear after the first refresh.</p></div>
+        <div class="download-row"><a href="/api/macro-template" download>Download macro input template ↗</a><a href="/api/event-template" download>Download event template ↗</a><a href="/api/official-reference-template" download>Download reference-rate template ↗</a><a href="/api/factor-weights-template" download>Download factor-weight template ↗</a></div>
+      </section>
+      <section class="section" id="news">
+        <div class="section-title"><div><p class="eyebrow">CONTEXT ONLY</p><h2>News & events</h2><p class="section-copy">Current headlines do not enter numerical forecasts. Historical event inputs must be timestamped separately.</p></div><button id="news-button" class="button secondary">Refresh headlines</button></div>
+        <div class="field-row"><label for="ollama-model">Local Ollama model</label><input id="ollama-model" value="qwen2.5:7b" maxlength="100"><button id="analyze-button" class="button secondary">Explain with local model</button></div>
+        <div id="news-result" class="panel result-block"><p class="muted">Headlines not fetched yet.</p></div>
+        <p class="footnote">The optional Ollama integration runs against localhost and its commentary is not treated as a calibrated forecast.</p>
+      </section>
+      <section class="section" id="shadow">
+        <div class="section-title"><div><p class="eyebrow">PROSPECTIVE VALIDATION</p><h2>Shadow-forecast ledger</h2><p class="section-copy">Record a forecast snapshot before outcomes are known, then score it as future market observations arrive.</p></div><div class="button-row"><button id="record-shadow" class="button primary" disabled>Record forecast snapshot</button><button id="shadow-button" class="button secondary">Refresh ledger</button></div></div>
+        <div id="shadow-result" class="panel result-block"><p class="muted">No ledger loaded yet.</p></div>
+      </section>
+      <footer><span>RUPEE PREDICTION SYSTEM · v4.1.0</span><span>Educational research only · Not financial advice</span></footer>
+    </main>
+  </div>
+</body>
+</html>

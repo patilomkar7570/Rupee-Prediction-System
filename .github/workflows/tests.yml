@@ -1,0 +1,38 @@
+name: Quality checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  offline-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Compile Python modules
+        run: python -m compileall -q backend tests
+      - name: Check frontend JavaScript syntax
+        run: node --check frontend/app.js
+      - name: Run offline and API smoke tests
+        run: python -m unittest discover -s tests -v
+      - name: Check release metadata and required files
+        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','launch_windows.bat','run_release_checks.bat','tests/test_api_smoke.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md']; missing=[p for p in required if not Path(p).exists()]; print('Missing release files:', missing); assert not missing; assert Path('VERSION').read_text().strip() == '4.1.0'"
