@@ -32,13 +32,13 @@ if not exist ".venv\Scripts\python.exe" (
   )
 )
 
-if not exist ".venv\deps-installed.flag" (
+if not exist ".venv\deps-installed-4.1.0-rc1.flag" (
   echo [2/3] Installing v4.1.0-rc1 dependencies. This may take a few minutes...
   ".venv\Scripts\python.exe" -m pip install --upgrade pip
   if errorlevel 1 goto install_error
   ".venv\Scripts\python.exe" -m pip install -r requirements.txt
   if errorlevel 1 goto install_error
-  echo installed>".venv\deps-installed.flag"
+  echo installed>".venv\deps-installed-4.1.0-rc1.flag"
 ) else (
   echo [2/3] Dependencies already installed for this v4.1.0-rc1 folder.
 )
