@@ -1,9 +1,12 @@
 # Changelog
 
-## v4.1.0 licensing update — 2026-10-24
+## v4.1.0 release-candidate hardening — 2026-10-24
 
 - Replaced the MIT License with the PolyForm Noncommercial License 1.0.0. Use, modification, and redistribution are limited to purposes permitted by that license; commercial use requires separate permission.
 - Updated license notices in the README, security policy, and source register.
+- Added a fail-closed live-validation freshness gate for invalid, future-dated, or more-than-seven-calendar-day-old USD/INR target history.
+- Expanded tests for target freshness, data-quality blocking conditions, and the complete shadow-forecast record/scoring loop.
+- Added a CI-produced source ZIP and SHA-256 checksum on the release-candidate branch, only after all four platform/Python test jobs pass. This does not publish a GitHub Release or tag.
 
 ## v4.1.0 — Point-in-time guardrails & release packaging (2026-10-24)
 
