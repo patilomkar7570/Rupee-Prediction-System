@@ -1,4 +1,4 @@
-# Release readiness — v4.1.0
+# Release readiness — v4.1.0-rc1
 
 **Status:** release candidate; no formal GitHub Release has been published yet.
 
@@ -24,7 +24,7 @@ This checklist is deliberately small. The goal is to freeze the current scope af
 
 ## Freeze policy after the release
 
-Once the gates above are satisfied, treat v4.1.0 as feature-complete. Do not add optional features just to keep the project moving. Limit follow-up work to release-blocking defects, security issues, and necessary compatibility fixes when dependencies or external data sources change.
+Once the gates above are satisfied, publish the stable v4.1.0 release and treat that scope as feature-complete. Do not add optional features just to keep the project moving. Limit follow-up work to release-blocking defects, security issues, and necessary compatibility fixes when dependencies or external data sources change.
 
 A claim that the forecasts are accurate is a separate research claim. It needs reproducible out-of-sample evidence; stronger evidence comes from recording forecasts prospectively and scoring them after outcomes occur. A software release may be published as a research tool without claiming that the model is profitable or reliably predicts exchange rates.
 
