@@ -67,7 +67,6 @@ jobs:
       - name: Verify release archive contents
         run: |
           python - <<'PY'
-          from pathlib import PurePosixPath
           from zipfile import ZipFile
 
           archive = "dist/Rupee-Prediction-System-v4.1.0-rc1.zip"
@@ -84,7 +83,7 @@ jobs:
               n for n in names
               if "/.venv/" in n or "/__pycache__/" in n or n.endswith(".pyc")
               or n.endswith("/.env") or "/.env." in n
-              or ("/runtime/" in n and not n.endswith("/runtime/.gitkeep"))
+              or ("/runtime/" in n and not n.endswith("/runtime/.gitkeep") and not n.endswith("/runtime/"))
           ]
           if missing:
               raise SystemExit(f"Archive missing required files: {missing}")
