@@ -1,4 +1,4 @@
-"""Best-effort India macro and capital-flow connectors for RPS v4.1.0.
+"""Best-effort India macro and capital-flow connectors for RPS v4.1.0-rc1.
 
 Sources are public feeds, not a guarantee of current/complete/official real-time data.
 Publication dates are approximated conservatively when the source only exposes observation dates.
@@ -18,7 +18,7 @@ import requests
 from .http_client import get as http_get
 
 HEADERS = {
-    "User-Agent": "RupeePredictionResearch/4.1.0 (local educational research app)",
+    "User-Agent": "RupeePredictionResearch/4.1.0-rc1 (local educational research app)",
     "Accept": "text/html,text/csv,application/json,application/vnd.ms-excel,*/*",
 }
 DBIE_API = "https://data-api.dbie.rbihub.in/api/tables"
