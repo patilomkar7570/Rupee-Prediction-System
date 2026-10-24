@@ -1,11 +1,11 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Rupee Prediction System v4.1.0-rc1
+title Rupee Prediction System v4.1.0-rc1-rc1
 
 echo.
 echo  ==================================================
-echo    RUPEE PREDICTION SYSTEM - v4.1.0 LOCAL RESEARCH
+echo    RUPEE PREDICTION SYSTEM - v4.1.0-rc1 LOCAL RESEARCH
 echo  ==================================================
 echo.
 echo This folder is independent from your older project versions.
@@ -22,7 +22,7 @@ if errorlevel 1 (
 )
 
 if not exist ".venv\Scripts\python.exe" (
-  echo [1/3] Creating a private Python environment for v4.1.0...
+  echo [1/3] Creating a private Python environment for v4.1.0-rc1...
   py -3.12 -m venv .venv 2>nul
   if errorlevel 1 py -3.11 -m venv .venv 2>nul
   if errorlevel 1 (
@@ -33,14 +33,14 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 if not exist ".venv\deps-installed.flag" (
-  echo [2/3] Installing v4.1.0 dependencies. This may take a few minutes...
+  echo [2/3] Installing v4.1.0-rc1 dependencies. This may take a few minutes...
   ".venv\Scripts\python.exe" -m pip install --upgrade pip
   if errorlevel 1 goto install_error
   ".venv\Scripts\python.exe" -m pip install -r requirements.txt
   if errorlevel 1 goto install_error
   echo installed>".venv\deps-installed.flag"
 ) else (
-  echo [2/3] Dependencies already installed for this v4.1.0 folder.
+  echo [2/3] Dependencies already installed for this v4.1.0-rc1 folder.
 )
 
 echo [3/3] Starting the local backend...
