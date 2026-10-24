@@ -17,6 +17,8 @@ class ApiSmokeTests(unittest.TestCase):
         body = response.json()
         self.assertEqual(body["application"], "Rupee Prediction System")
         self.assertIn("version", body)
+        self.assertIn(body["readiness"], {"data_available", "data_refresh_required"})
+        self.assertIn("market_data_present", body)
 
     def test_dashboard_route_is_served(self):
         response = self.client.get("/")

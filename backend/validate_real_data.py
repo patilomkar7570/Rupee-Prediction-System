@@ -8,6 +8,9 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 
+import numpy as np
+import pandas as pd
+
 from .data_collector import collect_market_data, get_source_status
 from .backtest import run_backtest
 from .paths import RUNTIME_DIR, ensure_runtime_layout
@@ -27,12 +30,64 @@ def fmt_pct(value: object) -> str:
     return f"{float(value):.2f}%" if isinstance(value, (int, float)) else "n/a"
 
 
+
+def validate_target_freshness(
+    prices: pd.DataFrame,
+    *,
+    now: pd.Timestamp | None = None,
+    max_age_days: int = 7,
+) -> dict[str, object]:
+    """Fail closed when the target series is invalid, future-dated, or stale.
+
+    The freshness rule is intentionally in calendar days to tolerate weekends/holidays,
+    while still preventing an old cached reference-rate dataset from being presented as
+    a live-data validation run.
+    """
+    if prices is None or prices.empty or "USDINR" not in prices.columns:
+        raise RuntimeError("No valid USD/INR target history is available for freshness validation.")
+
+    rates = pd.to_numeric(prices["USDINR"], errors="coerce").to_numpy(dtype=float)
+    if not len(rates) or not np.isfinite(rates).all() or (rates <= 0).any():
+        raise RuntimeError("USD/INR target history contains missing, non-finite, or non-positive values; validation stopped.")
+
+    latest = pd.Timestamp(prices.index.max())
+    if pd.isna(latest):
+        raise RuntimeError("Latest USD/INR target date is invalid; validation stopped.")
+    if latest.tzinfo is not None:
+        latest = latest.tz_convert("UTC").tz_localize(None)
+    latest = latest.normalize()
+
+    current = pd.Timestamp.now(tz="UTC") if now is None else pd.Timestamp(now)
+    if current.tzinfo is not None:
+        current = current.tz_convert("UTC").tz_localize(None)
+    today = current.normalize()
+    age_days = int((today - latest).days)
+
+    if age_days < -1:
+        raise RuntimeError(
+            f"Latest USD/INR target observation ({latest:%Y-%m-%d}) is {abs(age_days)} days in the future; verify timestamps."
+        )
+    if age_days > int(max_age_days):
+        raise RuntimeError(
+            f"Latest USD/INR target observation is {age_days} calendar days old "
+            f"({latest:%Y-%m-%d}); maximum allowed for live-data validation is {max_age_days} days."
+        )
+
+    return {
+        "latest_target_date": latest.strftime("%Y-%m-%d"),
+        "age_calendar_days": age_days,
+        "maximum_age_calendar_days": int(max_age_days),
+        "status": "current",
+        "note": "Target freshness is a minimum live-data gate, not proof that the source is official or historically point-in-time clean.",
+    }
+
 def build_report() -> dict:
     ensure_runtime_layout()
     print("[1/3] Downloading and aligning up to five years of market/macro history...")
     prices = collect_market_data(period="5y")
     if prices.empty or "USDINR" not in prices.columns:
         raise RuntimeError("No valid USD/INR market history was collected; validation stopped.")
+    target_freshness = validate_target_freshness(prices)
     if len(prices) < 400:
         raise RuntimeError(f"Only {len(prices)} aligned observations are available. At least 400 are recommended; validation stopped.")
 
@@ -75,6 +130,7 @@ def build_report() -> dict:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "data_kind": data_kind,
         "target_source": target_source,
+        "target_freshness": target_freshness,
         "observations": int(len(prices)),
         "start_date": prices.index.min().strftime("%Y-%m-%d"),
         "end_date": prices.index.max().strftime("%Y-%m-%d"),
@@ -95,6 +151,7 @@ def build_report() -> dict:
         f"- Generated (UTC): {result['generated_at_utc']}",
         f"- Data kind: {data_kind}.",
         f"- Target-source mode: {target_source}.",
+        f"- Target freshness: {target_freshness['status']} (latest {target_freshness['latest_target_date']}, age {target_freshness['age_calendar_days']} calendar days; limit {target_freshness['maximum_age_calendar_days']}).",
         f"- Aligned observations: {result['observations']:,}",
         f"- Sample window: {result['start_date']} to {result['end_date']}",
         "- Method: expanding-window walk-forward evaluation; target-overlap label purging is applied by the backtest implementation.",

@@ -1,4 +1,4 @@
-# Validation report — v4.1.0
+# Validation report — v4.1.0-rc1
 
 ## Scope
 
@@ -8,11 +8,11 @@ This repository is a local-first USD/INR forecasting research workbench. Softwar
 
 The GitHub Actions workflow in `.github/workflows/tests.yml` runs on Ubuntu and Windows with Python 3.11 and 3.12. It compiles Python modules, checks the dashboard JavaScript syntax with Node.js, runs the unit and API smoke-test suite, and checks that required release files and the `VERSION` file are present.
 
-The committed test suite includes deterministic checks for target construction, point-in-time timestamp handling, reference-rate CSV validation, moving-block bootstrap helpers, and basic API/dashboard routes. Consult the repository's **Actions** tab for the latest CI result.
+The committed test suite includes deterministic checks for target construction, point-in-time timestamp handling, reference-rate CSV validation, moving-block bootstrap helpers, basic API/dashboard routes, target freshness gating, data-quality blocking cases, and prospective shadow-forecast recording/scoring. Consult the repository's **Actions** tab for the latest CI result. The release gate also checks the dashboard JavaScript syntax when Node.js is installed locally.
 
 ## Not established by automated checks
 
-- Current availability or freshness of external data providers.
+- Future availability or freshness of external data providers. The live validation run refuses target history older than seven calendar days at the time of the run, but this cannot guarantee freshness after the report is generated.
 - Successful end-to-end installation on every Windows configuration.
 - Complete historical point-in-time vintages for all macroeconomic predictors.
 - Leakage-free real-market performance for each forecast horizon.

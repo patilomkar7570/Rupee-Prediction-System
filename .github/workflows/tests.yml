@@ -5,6 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   offline-tests:
     runs-on: ${{ matrix.os }}
@@ -15,19 +22,21 @@ jobs:
         python-version: ['3.11', '3.12']
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: requirements.txt
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
       - name: Install dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
+      - name: Check dependency compatibility
+        run: python -m pip check
       - name: Compile Python modules
         run: python -m compileall -q backend tests
       - name: Check frontend JavaScript syntax
@@ -35,4 +44,59 @@ jobs:
       - name: Run offline and API smoke tests
         run: python -m unittest discover -s tests -v
       - name: Check release metadata and required files
-        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','launch_windows.bat','run_release_checks.bat','tests/test_api_smoke.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md','run_release_candidate_validation.bat']; missing=[p for p in required if not Path(p).exists()]; print('Missing release files:', missing); assert not missing; assert Path('VERSION').read_text().strip() == '4.1.0'"
+        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','launch_windows.bat','run_release_checks.bat','tests/test_api_smoke.py','tests/test_release_guardrails.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md','run_release_candidate_validation.bat']; missing=[p for p in required if not Path(p).exists()]; print('Missing release files:', missing); assert not missing; assert Path('VERSION').read_text().strip() == '4.1.0-rc1'"
+
+  package-release-candidate:
+    name: Package release candidate
+    needs: offline-tests
+    if: github.event_name != 'pull_request' && startsWith(github.ref, 'refs/heads/release-candidate/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v7
+      - name: Build source ZIP and checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          archive="Rupee-Prediction-System-v4.1.0-rc1.zip"
+          git archive --format=zip --prefix="Rupee-Prediction-System-v4.1.0-rc1/" HEAD -o "dist/$archive"
+          (cd dist && sha256sum "$archive" > SHA256SUMS.txt)
+      - name: Verify archive SHA-256 checksum
+        run: cd dist && sha256sum --check SHA256SUMS.txt
+      - name: Verify release archive contents
+        run: |
+          python - <<'PY'
+          from zipfile import ZipFile
+
+          archive = "dist/Rupee-Prediction-System-v4.1.0-rc1.zip"
+          with ZipFile(archive) as bundle:
+              names = bundle.namelist()
+          required = [
+              "README.md", "VERSION", "LICENSE", "requirements.txt",
+              "launch_windows.bat", "run_release_candidate_validation.bat",
+              "backend/main.py", "frontend/index.html", "frontend/app.js",
+              "tests/test_core.py", "tests/test_release_guardrails.py",
+          ]
+          missing = [p for p in required if not any(n.endswith("/" + p) for n in names)]
+          forbidden = [
+              n for n in names
+              if "/.venv/" in n or "/__pycache__/" in n or n.endswith(".pyc")
+              or n.endswith("/.env") or "/.env." in n
+              or ("/runtime/" in n and not n.endswith("/runtime/.gitkeep") and not n.endswith("/runtime/"))
+          ]
+          if missing:
+              raise SystemExit(f"Archive missing required files: {missing}")
+          if forbidden:
+              raise SystemExit(f"Archive contains forbidden runtime/environment files: {forbidden}")
+          print(f"Archive verified: {len(names)} tracked files")
+          PY
+      - name: Upload source ZIP and SHA-256 checksum
+        uses: actions/upload-artifact@v7
+        with:
+          name: rupee-prediction-system-v4.1.0-rc1
+          path: |
+            dist/Rupee-Prediction-System-v4.1.0-rc1.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
