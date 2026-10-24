@@ -74,7 +74,7 @@ Never commit API keys, `.env` files, locally collected market data, personal not
 
 ## License
 
-Released under the MIT License. See [LICENSE](LICENSE). Third-party dependencies and external data sources remain subject to their own licenses and terms.
+This project is licensed under the **PolyForm Noncommercial License 1.0.0**. You may use, modify, and redistribute it only for purposes permitted by that license. The license does not grant commercial-use rights; obtain separate permission from the copyright holder before commercial use. Read [LICENSE](LICENSE) and the [official license text](https://polyformproject.org/licenses/noncommercial/1.0.0). Third-party dependencies and external data sources remain subject to their own licenses and terms.
 
 ## Disclaimer
 

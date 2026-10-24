@@ -1,12 +1,17 @@
 # Changelog
 
+## v4.1.0 licensing update — 2026-10-24
+
+- Replaced the MIT License with the PolyForm Noncommercial License 1.0.0. Use, modification, and redistribution are limited to purposes permitted by that license; commercial use requires separate permission.
+- Updated license notices in the README, security policy, and source register.
+
 ## v4.1.0 — Point-in-time guardrails & release packaging (2026-10-24)
 
 - Added a public RBI DBIE reference-rate table connector through a documented third-party read-only mirror API, including a local snapshot cache and clear stale-cache/source-provenance warnings. The mirror is not a live RBI feed; check the latest observation date before use.
 - Added strict reference-rate import normalization with date/rate column detection, positive/range checks and duplicate-date rejection. Imports never silently blend target definitions.
 - Added an explicit point-in-time helper for local macro data: reference dates and `AvailableAt` are combined conservatively, releases after 17:00 IST shift to the next weekday, invalid non-empty publication timestamps are excluded, and date-only inputs remain flagged as unaudited. This weekday rule is an approximation, not a full exchange-holiday calendar.
 - Stopped forward-filling USD/INR target observations across missing dates; optional predictor features retain separate as-of carry rules.
-- Expanded software tests and release metadata; switched this release package to the MIT License.
+- Expanded software tests and release metadata.
 - Remaining limitation: historical publication vintages are not complete for all automatic macro feeds. These changes reduce common timing/ingestion risks but do not certify historical leakage-free real-market results or predictive skill.
 
 ## v4.0.0 — Data integrity, uncertainty & release gates (2026-10-23)

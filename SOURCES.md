@@ -22,4 +22,4 @@ Rupee Prediction System is a research application. A source being listed here do
 5. Report horizons, sample window, row count, baselines, metrics, uncertainty and data-source limits together.
 6. Collect prospective shadow forecasts before their outcomes are known. Do not rewrite previous records after seeing outcomes.
 
-Data provider terms may govern use, redistribution, or commercial use of downloaded data independently of this software's MIT License. This project does not bundle historical market data in the release ZIP.
+Data provider terms may govern use, redistribution, or commercial use of downloaded data independently of this software's PolyForm Noncommercial License 1.0.0. This project does not bundle historical market data in the release ZIP.
