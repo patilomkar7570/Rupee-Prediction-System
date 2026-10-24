@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title Rupee Prediction System v4.1.0
+title Rupee Prediction System v4.1.0-rc1
 
 echo.
 echo  ==================================================
