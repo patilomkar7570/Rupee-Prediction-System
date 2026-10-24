@@ -19,9 +19,9 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 - Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
 - Windows launcher scripts, offline tests, and a GitHub Actions quality-check workflow.
 
-## Current release: v4.1.0
+## Release candidate: v4.1.0 (not yet published)
 
-This repository contains the v4.1.0 source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
+Version 4.1.0 is the intended first formal release, but it has not been published as a GitHub Release yet. The repository contains the source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
 
 The default `INR=X` series is a Yahoo Finance USD/INR proxy and may not match an official reference rate or an executable quote. Data providers can change schemas, revise history, or become unavailable. Review the configured target definition and data-quality warnings before interpreting any result.
 
@@ -56,6 +56,8 @@ node --check frontend/app.js
 ```
 
 To download market history and run a real-data walk-forward evaluation, run `run_real_market_validation.bat`. This requires internet access and may take several minutes. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
+
+For the complete one-time pre-release gate on Windows, run `run_release_candidate_validation.bat`. It prepares the local Python environment, runs the offline checks, and then attempts the live-data evaluation. External provider or network failures are reported as an incomplete live-data gate, not as evidence that forecasts are accurate.
 
 Software tests verify implementation behavior; they do not prove real-world predictive accuracy.
 
