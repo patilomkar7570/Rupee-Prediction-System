@@ -40,8 +40,10 @@ def readiness_summary(version: str, target_source: str, data_file: Path, status_
         data_bytes = 0
     return {
         "status": "ok", "application": "Rupee Prediction System", "version": version,
+        "readiness": "data_available" if data_bytes > 0 else "data_refresh_required",
         "target_source": target_source, "market_data_present": data_bytes > 0,
         "market_data_bytes": data_bytes, "source_status_present": source_status_exists,
         "runtime_mode": "local-first research; bind to loopback unless you deliberately configure otherwise",
+        "note": "HTTP status ok means the local app is responding; it does not mean data sources are fresh or a forecast is ready. Inspect readiness and source status before forecasting.",
         "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
