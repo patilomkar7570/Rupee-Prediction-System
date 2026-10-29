@@ -1,7 +1,10 @@
 # Changelog
 
-## v4.1.0-rc1 release-candidate hardening — 2026-10-24
+## v4.1.0-rc1 release-candidate hardening — 2026-10-29
 
+- Consolidated Windows startup, daily refresh, offline tests, live-data validation, and the combined release gate into one `RUN.bat` entry point. Double-clicking starts the dashboard; optional modes are available from the same file.
+- Made warm startup faster by checking the SHA-256 of `requirements.txt` and skipping dependency installation when requirements have not changed.
+- Added a launcher contract test and updated CI/archive checks to enforce exactly one root-level batch file.
 - Replaced the MIT License with the PolyForm Noncommercial License 1.0.0. Use, modification, and redistribution are limited to purposes permitted by that license; commercial use requires separate permission.
 - Updated license notices in the README, security policy, and source register.
 - Added a fail-closed live-validation freshness gate for invalid, future-dated, or more-than-seven-calendar-day-old USD/INR target history.

@@ -17,11 +17,11 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 - Point-in-time and data-quality checks, including stale or incomplete target history.
 - Optional user-supplied USD/INR reference-rate CSVs and a configurable target definition.
 - Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
-- Windows launcher scripts, offline tests, and a GitHub Actions quality-check workflow.
+- **One Windows entry point:** `RUN.bat` starts the app, prepares dependencies when needed, and provides optional update and validation commands.
 
 ## Release candidate: v4.1.0-rc1 (not yet published)
 
-Version 4.1.0-rc1 is the release candidate for the planned v4.1.0 release. It has not been published as a GitHub Release or tagged yet. The repository contains the source, blank data templates, documentation, tests, and local launch/validation scripts. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
+Version 4.1.0-rc1 is the release candidate for the planned v4.1.0 release. It has not been published as a GitHub Release or tagged yet. The repository contains the source, blank data templates, documentation, tests, and a unified Windows launcher. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
 
 The default `INR=X` series is a Yahoo Finance USD/INR proxy and may not match an official reference rate or an executable quote. Data providers can change schemas, revise history, or become unavailable. Review the configured target definition and data-quality warnings before interpreting any result.
 
@@ -33,31 +33,32 @@ The release requires Python 3.11 or 3.12.
 
 1. Download the repository using GitHub's **Code → Download ZIP**, then extract it into a new folder.
 2. Open the extracted folder.
-3. Run `launch_windows.bat`.
-4. Allow the first launch to install the dependencies listed in `requirements.txt`.
-5. In the dashboard, refresh the data and inspect source health and the data-quality / point-in-time audit before running forecasts.
+3. Double-click **`RUN.bat`**.
+4. On first launch, the launcher creates a private Python environment and installs dependencies. It records a checksum of `requirements.txt`, so later launches skip package installation unless the requirements change.
+5. The launcher starts the local backend in a separate terminal and opens the dashboard at [http://127.0.0.1:8000](http://127.0.0.1:8000). Keep the backend terminal open while using the dashboard.
 
-Keep the local backend terminal open while using the dashboard. The development server is configured to bind to loopback only; do not expose it directly to a public network.
+The default launch does not run slow historical validation automatically. In the dashboard, refresh the data and inspect source health and the data-quality / point-in-time audit before running forecasts. The backend binds to loopback only; do not expose it directly to a public network.
+
+## Optional commands
+
+All local operations use the same batch file. Run these from Command Prompt or PowerShell opened in the project folder:
+
+```bat
+RUN.bat update         rem Refresh market data and write a daily forecast
+RUN.bat test           rem Run offline software checks
+RUN.bat validate       rem Download current history and run walk-forward validation
+RUN.bat release-check  rem Run offline checks, then live-data validation
+```
+
+The live-data commands require internet access and may take several minutes. They do not establish durable forecasting skill or profitability. If a provider is unavailable or data is stale, inspect the error and the generated report rather than treating the gate as passed.
 
 ## Validation
 
-Run the offline checks from the project folder:
+`RUN.bat test` compiles Python modules, runs unit and API smoke tests, checks the frontend JavaScript syntax when Node.js is installed, and verifies the release file/version and single-launcher requirements.
 
-```powershell
-run_release_checks.bat
-```
+`RUN.bat validate` downloads market history and runs a real-data walk-forward evaluation. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
 
-Or run the core checks from an activated Python environment:
-
-```powershell
-python -m compileall -q backend tests
-python -m unittest discover -s tests -v
-node --check frontend/app.js
-```
-
-To download market history and run a real-data walk-forward evaluation, run `run_real_market_validation.bat`. This requires internet access and may take several minutes. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
-
-For the complete one-time pre-release gate on Windows, run `run_release_candidate_validation.bat`. It prepares the local Python environment, runs the offline checks, and then attempts the live-data evaluation. External provider or network failures are reported as an incomplete live-data gate, not as evidence that forecasts are accurate. Live validation also rejects invalid, future-dated, or more-than-seven-calendar-day-old target history.
+`RUN.bat release-check` runs both sets of checks sequentially. External provider or network failures are reported as a failed/incomplete live-data gate, not as evidence that forecasts are accurate. Live validation rejects invalid, future-dated, or more-than-seven-calendar-day-old target history.
 
 Software tests verify implementation behavior; they do not prove real-world predictive accuracy.
 

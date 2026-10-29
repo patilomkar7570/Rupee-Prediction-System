@@ -5,7 +5,7 @@ Thanks for helping improve Rupee Prediction System.
 ## Before opening a pull request
 
 - Keep source files, blank templates, and runtime/user data separate. Never commit downloaded market history, private input files, logs, API credentials, or generated report outputs.
-- Run `run_release_checks.bat` on Windows, or run `python -m compileall -q backend tests` and `python -m unittest discover -s tests -v` in a configured Python environment.
+- Run `RUN.bat test` on Windows, or run `python -m compileall -q backend tests` and `python -m unittest discover -s tests -v` in a configured Python environment.
 - For changes to models, targets, date alignment, or feature engineering, explain the leakage controls and add a test where possible.
 - Do not use synthetic data to claim real-world forecasting accuracy.
 - Cite the source and availability date for external data, and make missing/stale values visible rather than silently fabricating observations.

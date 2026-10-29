@@ -14,13 +14,13 @@ This is a research workbench, not a validated trading product. Status describes 
 
 ## Reliability and operations
 
-- **Implemented:** local dashboard, source/data-quality views, health and status endpoints, structured rotating logs, Windows launch and validation scripts, and CI workflow for offline checks.
+- **Implemented:** local dashboard, source/data-quality views, health and status endpoints, structured rotating logs, a single Windows `RUN.bat` launcher for startup and optional operations, and CI workflow for offline checks.
 - **Still needed:** run the first-install workflow on the target Windows machine, verify live connectors, and collect prospective shadow forecasts before outcomes are known.
 
 ## Release gates
 
 1. Verify target definition, data coverage, provenance, and source freshness.
-2. Run all offline tests and the real-data validation workflow.
+2. Run `RUN.bat test` and `RUN.bat validate`.
 3. Compare every horizon against its stated baseline and preserve the holdout protocol.
 4. Record prospective shadow forecasts and wait for outcomes to mature before describing performance.
 5. Do not describe the system as accurate or profitable unless independently supported by reproducible evidence.
