@@ -80,10 +80,13 @@ jobs:
               "tests/test_launcher_contract.py",
           ]
           missing = [p for p in required if not any(n.endswith("/" + p) for n in names)]
-          root_batch_files = [
-              n for n in names
-              if "/" not in n.rstrip("/") and n.lower().endswith(".bat")
-          ]
+          prefix = "Rupee-Prediction-System-v4.1.0-rc1/"
+          root_batch_files = sorted(
+              n[len(prefix):] for n in names
+              if n.startswith(prefix)
+              and "/" not in n[len(prefix):].rstrip("/")
+              and n.lower().endswith(".bat")
+          )
           forbidden = [
               n for n in names
               if "/.venv/" in n or "/__pycache__/" in n or n.endswith(".pyc")
