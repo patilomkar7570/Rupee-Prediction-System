@@ -100,14 +100,6 @@ call :pause_for_cli
 exit /b 0
 
 :ensure_environment
-where py >nul 2>nul
-if errorlevel 1 (
-  echo ERROR: The Python launcher ^(py^) was not found.
-  echo Install Python 3.11 or 3.12 from https://www.python.org/downloads/windows/
-  echo Enable the Python launcher during setup.
-  exit /b 1
-)
-
 if exist ".venv\Scripts\python.exe" (
   ".venv\Scripts\python.exe" -c "import sys; raise SystemExit(0 if sys.version_info[:2] in ((3, 11), (3, 12)) else 1)" >nul 2>nul
   if errorlevel 1 (
@@ -117,11 +109,29 @@ if exist ".venv\Scripts\python.exe" (
 )
 
 if not exist ".venv\Scripts\python.exe" (
-  echo Creating the private Python environment...
-  py -3.12 -m venv ".venv" >nul 2>nul
-  if errorlevel 1 (
-    if exist ".venv" rmdir /s /q ".venv"
-    py -3.11 -m venv ".venv"
+  where py >nul 2>nul
+  if not errorlevel 1 (
+    echo Creating the private Python environment...
+    py -3.12 -m venv ".venv" >nul 2>nul
+    if errorlevel 1 (
+      if exist ".venv" rmdir /s /q ".venv"
+      py -3.11 -m venv ".venv"
+    )
+  ) else (
+    where python >nul 2>nul
+    if errorlevel 1 (
+      echo ERROR: Python 3.11 or 3.12 was not found.
+      echo Install Python from https://www.python.org/downloads/windows/ and add it to PATH.
+      exit /b 1
+    )
+    python -c "import sys; raise SystemExit(0 if sys.version_info[:2] in ((3, 11), (3, 12)) else 1)" >nul 2>nul
+    if errorlevel 1 (
+      echo ERROR: The python command on PATH must be Python 3.11 or 3.12.
+      echo Install a supported version and try again.
+      exit /b 1
+    )
+    echo Creating the private Python environment using python from PATH...
+    python -m venv ".venv"
   )
   if errorlevel 1 (
     echo ERROR: Could not create a Python 3.11 or 3.12 environment.

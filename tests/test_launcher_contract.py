@@ -23,6 +23,11 @@ class LauncherContractTests(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.assertIn(f'if /I "%MODE%"=="{mode}" set "ACTION={mode}"', content)
 
+    def test_existing_python_path_is_supported_without_py_launcher(self) -> None:
+        content = (ROOT / "RUN.bat").read_text(encoding="utf-8")
+        self.assertIn("where python", content)
+        self.assertIn("python -m venv", content)
+
     def test_warm_start_skips_dependency_install_when_requirements_are_unchanged(self) -> None:
         content = (ROOT / "RUN.bat").read_text(encoding="utf-8")
         self.assertIn("Get-FileHash requirements.txt -Algorithm SHA256", content)
