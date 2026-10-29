@@ -43,8 +43,8 @@ jobs:
         run: node --check frontend/app.js
       - name: Run offline and API smoke tests
         run: python -m unittest discover -s tests -v
-      - name: Check release metadata and required files
-        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','launch_windows.bat','run_release_checks.bat','tests/test_api_smoke.py','tests/test_release_guardrails.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md','run_release_candidate_validation.bat']; missing=[p for p in required if not Path(p).exists()]; print('Missing release files:', missing); assert not missing; assert Path('VERSION').read_text().strip() == '4.1.0-rc1'"
+      - name: Check release metadata and the single Windows launcher
+        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','RUN.bat','requirements.txt','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[p for p in required if not Path(p).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); print('Missing release files:', missing); print('Root batch files:', launchers); assert not missing; assert launchers == ['RUN.bat']; assert Path('VERSION').read_text().strip() == '4.1.0-rc1'"
 
   package-release-candidate:
     name: Package release candidate
@@ -74,11 +74,19 @@ jobs:
               names = bundle.namelist()
           required = [
               "README.md", "VERSION", "LICENSE", "requirements.txt",
-              "launch_windows.bat", "run_release_candidate_validation.bat",
+              "RUN.bat",
               "backend/main.py", "frontend/index.html", "frontend/app.js",
               "tests/test_core.py", "tests/test_release_guardrails.py",
+              "tests/test_launcher_contract.py",
           ]
           missing = [p for p in required if not any(n.endswith("/" + p) for n in names)]
+          prefix = "Rupee-Prediction-System-v4.1.0-rc1/"
+          root_batch_files = sorted(
+              n[len(prefix):] for n in names
+              if n.startswith(prefix)
+              and "/" not in n[len(prefix):].rstrip("/")
+              and n.lower().endswith(".bat")
+          )
           forbidden = [
               n for n in names
               if "/.venv/" in n or "/__pycache__/" in n or n.endswith(".pyc")
@@ -87,6 +95,8 @@ jobs:
           ]
           if missing:
               raise SystemExit(f"Archive missing required files: {missing}")
+          if root_batch_files != ["RUN.bat"]:
+              raise SystemExit(f"Archive must contain only RUN.bat at the root: {root_batch_files}")
           if forbidden:
               raise SystemExit(f"Archive contains forbidden runtime/environment files: {forbidden}")
           print(f"Archive verified: {len(names)} tracked files")
