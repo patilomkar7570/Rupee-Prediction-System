@@ -1,5 +1,11 @@
 # Changelog
 
+## Windows launcher update — 2026-11-03
+
+- Renamed the single Windows entry point to lowercase `run.bat` and aligned repository checks and documentation with that name.
+- The launcher selects the latest registered Python through `py`, with `python` on PATH as a fallback. It installs dependencies into the existing Python installation and does not create a virtual environment.
+- Added the dependency fingerprint file to `.gitignore`.
+
 ## v4.1.0-rc1 release-candidate hardening — 2026-10-29
 
 - Consolidated Windows startup, daily refresh, offline tests, live-data validation, and the combined release gate into one `RUN.bat` entry point. Double-clicking starts the dashboard; optional modes are available from the same file.

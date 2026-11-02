@@ -17,7 +17,7 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 - Point-in-time and data-quality checks, including stale or incomplete target history.
 - Optional user-supplied USD/INR reference-rate CSVs and a configurable target definition.
 - Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
-- **One Windows entry point:** `RUN.bat` starts the app, prepares dependencies when needed, and provides optional update and validation commands.
+- **One Windows entry point:** `run.bat` starts the app, prepares dependencies when needed, and provides optional update and validation commands.
 
 ## Release candidate: v4.1.0-rc1 (not yet published)
 
@@ -29,12 +29,12 @@ Read [CHANGELOG.md](CHANGELOG.md) for release notes, [SOURCES.md](SOURCES.md) fo
 
 ## Quick start (Windows 10/11)
 
-The release requires Python 3.11 or 3.12.
+The launcher uses the latest registered Python selected by the Windows Python Launcher (`py`), falling back to `python` on PATH when the launcher is unavailable.
 
 1. Download the repository using GitHub's **Code → Download ZIP**, then extract it into a new folder.
 2. Open the extracted folder.
-3. Double-click **`RUN.bat`**.
-4. On first launch, the launcher creates a private Python environment and installs dependencies. It records a checksum of `requirements.txt`, so later launches skip package installation unless the requirements change.
+3. Double-click **`run.bat`**.
+4. On first launch, the launcher installs dependencies into the selected existing Python installation; it does not create a virtual environment. It records a checksum of `requirements.txt` and the selected Python executable, so later launches skip package installation unless the requirements or interpreter changes. Packages are shared with other projects using that Python installation.
 5. The launcher starts the local backend in a separate terminal and opens the dashboard at [http://127.0.0.1:8000](http://127.0.0.1:8000). Keep the backend terminal open while using the dashboard.
 
 The default launch does not run slow historical validation automatically. In the dashboard, refresh the data and inspect source health and the data-quality / point-in-time audit before running forecasts. The backend binds to loopback only; do not expose it directly to a public network.
@@ -44,21 +44,21 @@ The default launch does not run slow historical validation automatically. In the
 All local operations use the same batch file. Run these from Command Prompt or PowerShell opened in the project folder:
 
 ```bat
-RUN.bat update         rem Refresh market data and write a daily forecast
-RUN.bat test           rem Run offline software checks
-RUN.bat validate       rem Download current history and run walk-forward validation
-RUN.bat release-check  rem Run offline checks, then live-data validation
+run.bat update         rem Refresh market data and write a daily forecast
+run.bat test           rem Run offline software checks
+run.bat validate       rem Download current history and run walk-forward validation
+run.bat release-check  rem Run offline checks, then live-data validation
 ```
 
 The live-data commands require internet access and may take several minutes. They do not establish durable forecasting skill or profitability. If a provider is unavailable or data is stale, inspect the error and the generated report rather than treating the gate as passed.
 
 ## Validation
 
-`RUN.bat test` compiles Python modules, runs unit and API smoke tests, checks the frontend JavaScript syntax when Node.js is installed, and verifies the release file/version and single-launcher requirements.
+`run.bat test` compiles Python modules, runs unit and API smoke tests, checks the frontend JavaScript syntax when Node.js is installed, and verifies the release file/version and single-launcher requirements.
 
-`RUN.bat validate` downloads market history and runs a real-data walk-forward evaluation. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
+`run.bat validate` downloads market history and runs a real-data walk-forward evaluation. Review the exact target definition, source freshness, coverage, baseline metrics, and uncertainty intervals in the generated report.
 
-`RUN.bat release-check` runs both sets of checks sequentially. External provider or network failures are reported as a failed/incomplete live-data gate, not as evidence that forecasts are accurate. Live validation rejects invalid, future-dated, or more-than-seven-calendar-day-old target history.
+`run.bat release-check` runs both sets of checks sequentially. External provider or network failures are reported as a failed/incomplete live-data gate, not as evidence that forecasts are accurate. Live validation rejects invalid, future-dated, or more-than-seven-calendar-day-old target history.
 
 Software tests verify implementation behavior; they do not prove real-world predictive accuracy.
 

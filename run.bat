@@ -22,7 +22,10 @@ if /I "%MODE%"=="help" set "ACTION=help"
 if not defined ACTION goto usage_error
 if /I "%ACTION%"=="help" goto usage
 
-call :ensure_environment
+call :ensure_python
+if errorlevel 1 goto failed
+
+call :ensure_dependencies
 if errorlevel 1 goto failed
 
 if /I "%ACTION%"=="start" goto start_app
@@ -43,15 +46,15 @@ if not errorlevel 1 (
 
 echo Starting the local dashboard...
 echo The backend will run in a separate window. Keep that window open while using the app.
-start "Rupee Prediction System Backend" /D "%CD%" "%CD%\.venv\Scripts\python.exe" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
+start "Rupee Prediction System Backend" /D "%CD%" "%ComSpec%" /k ""%PYTHON_EXE%" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000"
 
 echo Waiting for the backend to become ready...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$deadline=(Get-Date).AddSeconds(45); do { try { $r=Invoke-RestMethod -Uri '%APP_URL%/api/health' -TimeoutSec 2; if ($r.application -eq 'Rupee Prediction System' -and $r.version -eq '%APP_VERSION%') { exit 0 } } catch {}; Start-Sleep -Milliseconds 500 } while ((Get-Date) -lt $deadline); exit 1"
 if errorlevel 1 (
   echo.
   echo ERROR: The dashboard did not become ready within 45 seconds.
-  echo Check the backend window for details. Port 8000 may already be in use.
-  echo If Python packages are broken, delete .venv\deps-installed.sha256 and run RUN.bat again.
+  echo Check the backend window for the Python error. Port 8000 may already be in use.
+  echo If dependencies are broken, delete deps-installed.sha256 and run run.bat again.
   pause
   exit /b 1
 )
@@ -61,7 +64,7 @@ exit /b 0
 
 :update_data
 echo Refreshing market data and writing the latest daily forecast...
-"%CD%\.venv\Scripts\python.exe" -m backend.daily_update
+"%PYTHON_EXE%" -m backend.daily_update
 if errorlevel 1 goto failed
 echo Update completed. Outputs are stored under runtime.
 call :pause_for_cli
@@ -79,7 +82,7 @@ exit /b 0
 echo Running live-data walk-forward validation. This needs internet and may take several minutes.
 echo It does not guarantee or certify predictive accuracy.
 echo.
-"%CD%\.venv\Scripts\python.exe" -m backend.validate_real_data
+"%PYTHON_EXE%" -m backend.validate_real_data
 if errorlevel 1 goto failed
 echo.
 echo Validation completed. Review the reports under runtime before interpreting the results.
@@ -92,81 +95,76 @@ if errorlevel 1 goto failed
 echo.
 echo Offline checks passed. Now running live-data validation...
 echo.
-"%CD%\.venv\Scripts\python.exe" -m backend.validate_real_data
+"%PYTHON_EXE%" -m backend.validate_real_data
 if errorlevel 1 goto failed
 echo.
 echo RELEASE CHECKS COMPLETED. Review the generated report and the checklist before publishing.
 call :pause_for_cli
 exit /b 0
 
-:ensure_environment
-if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" -c "import sys; raise SystemExit(0 if sys.version_info[:2] in ((3, 11), (3, 12)) else 1)" >nul 2>nul
-  if errorlevel 1 (
-    echo Rebuilding the project's private environment because its Python version is unsupported...
-    rmdir /s /q ".venv"
-  )
+:ensure_python
+set "PYTHON_EXE="
+rem The Windows Python Launcher selects the latest registered Python by default.
+where py >nul 2>nul
+if not errorlevel 1 (
+  for /f "delims=" %%P in ('py -c "import sys; print(sys.executable)" 2^>nul') do set "PYTHON_EXE=%%P"
 )
-
-if not exist ".venv\Scripts\python.exe" (
-  where py >nul 2>nul
+rem Fall back to the python command on PATH when the launcher is unavailable.
+if not defined PYTHON_EXE (
+  where python >nul 2>nul
   if not errorlevel 1 (
-    echo Creating the private Python environment...
-    py -3.12 -m venv ".venv" >nul 2>nul
-    if errorlevel 1 (
-      if exist ".venv" rmdir /s /q ".venv"
-      py -3.11 -m venv ".venv"
-    )
-  ) else (
-    where python >nul 2>nul
-    if errorlevel 1 (
-      echo ERROR: Python 3.11 or 3.12 was not found.
-      echo Install Python from https://www.python.org/downloads/windows/ and add it to PATH.
-      exit /b 1
-    )
-    python -c "import sys; raise SystemExit(0 if sys.version_info[:2] in ((3, 11), (3, 12)) else 1)" >nul 2>nul
-    if errorlevel 1 (
-      echo ERROR: The python command on PATH must be Python 3.11 or 3.12.
-      echo Install a supported version and try again.
-      exit /b 1
-    )
-    echo Creating the private Python environment using python from PATH...
-    python -m venv ".venv"
-  )
-  if errorlevel 1 (
-    echo ERROR: Could not create a Python 3.11 or 3.12 environment.
-    exit /b 1
+    for /f "delims=" %%P in ('python -c "import sys; print(sys.executable)" 2^>nul') do set "PYTHON_EXE=%%P"
   )
 )
+if not defined PYTHON_EXE (
+  echo ERROR: Python was not found.
+  echo Install Python and enable the Python Launcher or Add Python to PATH.
+  exit /b 1
+)
+"%PYTHON_EXE%" -c "import sys; print('Using Python ' + sys.version.split()[0] + ' at ' + sys.executable)"
+if errorlevel 1 exit /b 1
+exit /b 0
 
+:ensure_dependencies
+if not exist "requirements.txt" (
+  echo ERROR: requirements.txt was not found in %CD%.
+  exit /b 1
+)
 set "REQUIREMENTS_HASH="
 for /f "delims=" %%H in ('powershell -NoProfile -Command "(Get-FileHash requirements.txt -Algorithm SHA256).Hash.ToLowerInvariant()"') do set "REQUIREMENTS_HASH=%%H"
 if not defined REQUIREMENTS_HASH (
   echo ERROR: Could not calculate the requirements.txt checksum.
   exit /b 1
 )
-
 set "INSTALLED_HASH="
-if exist ".venv\deps-installed.sha256" set /p "INSTALLED_HASH="<".venv\deps-installed.sha256"
-if /I not "%INSTALLED_HASH%"=="%REQUIREMENTS_HASH%" (
-  echo Installing or updating Python dependencies. This happens only on first run or when requirements.txt changes...
-  ".venv\Scripts\python.exe" -m pip install --disable-pip-version-check --upgrade pip
-  if errorlevel 1 exit /b 1
-  ".venv\Scripts\python.exe" -m pip install --disable-pip-version-check -r requirements.txt
-  if errorlevel 1 exit /b 1
-  >".venv\deps-installed.sha256" echo %REQUIREMENTS_HASH%
-) else (
-  echo Python environment is ready; dependencies are unchanged.
+set "INSTALLED_PYTHON="
+if exist "deps-installed.sha256" (
+  set /p "INSTALLED_HASH="<"deps-installed.sha256"
+  for /f "usebackq skip=1 delims=" %%P in ("deps-installed.sha256") do set "INSTALLED_PYTHON=%%P"
 )
+if /I "%INSTALLED_HASH%"=="%REQUIREMENTS_HASH%" if /I "%INSTALLED_PYTHON%"=="%PYTHON_EXE%" (
+  echo Python dependencies are ready; requirements and Python installation are unchanged.
+  exit /b 0
+)
+
+echo Installing or updating dependencies into the selected Python installation...
+"%PYTHON_EXE%" -m pip install --disable-pip-version-check --upgrade pip
+if errorlevel 1 exit /b 1
+"%PYTHON_EXE%" -m pip install --disable-pip-version-check -r requirements.txt
+if errorlevel 1 exit /b 1
+(
+  echo %REQUIREMENTS_HASH%
+  echo %PYTHON_EXE%
+) > "deps-installed.sha256"
 exit /b 0
 
 :offline_checks
 echo [1/4] Compiling Python modules...
-"%CD%\.venv\Scripts\python.exe" -m compileall -q backend tests
+"%PYTHON_EXE%" -m compileall -q backend tests
 if errorlevel 1 exit /b 1
 
 echo [2/4] Running offline and API tests...
-"%CD%\.venv\Scripts\python.exe" -m unittest discover -s tests -v
+"%PYTHON_EXE%" -m unittest discover -s tests -v
 if errorlevel 1 exit /b 1
 
 echo [3/4] Checking frontend JavaScript syntax when Node.js is installed...
@@ -179,7 +177,7 @@ if errorlevel 1 (
 )
 
 echo [4/4] Checking required release files, version, and the single-launcher rule...
-"%CD%\.venv\Scripts\python.exe" -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','requirements.txt','frontend/index.html','frontend/app.js','frontend/style.css','RUN.bat','backend/main.py','backend/paths.py','backend/validate_real_data.py','data/macro_inputs_template.csv','data/event_inputs_template.csv','data/factor_weights_template.csv','backend/india_macro_sources.py','backend/factor_audit.py','backend/numerical_forecast.py','backend/feature_ablation.py','backend/shadow_forecasts.py','backend/target_source.py','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','data/official_usdinr_reference_template.csv','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[x for x in required if not Path(x).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); version=Path('VERSION').read_text().strip() if Path('VERSION').exists() else ''; print('Missing files:', missing); print('Root batch files:', launchers); print('Version:', version); raise SystemExit(bool(missing) or launchers != ['RUN.bat'] or version != '4.1.0-rc1')"
+"%PYTHON_EXE%" -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','requirements.txt','frontend/index.html','frontend/app.js','frontend/style.css','run.bat','backend/main.py','backend/paths.py','backend/validate_real_data.py','data/macro_inputs_template.csv','data/event_inputs_template.csv','data/factor_weights_template.csv','backend/india_macro_sources.py','backend/factor_audit.py','backend/numerical_forecast.py','backend/feature_ablation.py','backend/shadow_forecasts.py','backend/target_source.py','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','data/official_usdinr_reference_template.csv','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[x for x in required if not Path(x).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); version=Path('VERSION').read_text().strip() if Path('VERSION').exists() else ''; print('Missing files:', missing); print('Root batch files:', launchers); print('Version:', version); raise SystemExit(bool(missing) or launchers != ['run.bat'] or version != '4.1.0-rc1')"
 if errorlevel 1 exit /b 1
 exit /b 0
 
@@ -192,13 +190,13 @@ exit /b 0
 echo.
 echo Rupee Prediction System v4.1.0-rc1
 echo.
-echo Double-click RUN.bat to start the dashboard.
+echo Double-click run.bat to start the dashboard.
 echo Optional commands from a terminal in this folder:
-echo   RUN.bat update        Refresh market data and write a forecast
-echo   RUN.bat test          Run offline software checks
-echo   RUN.bat validate      Run live-data walk-forward validation
-echo   RUN.bat release-check Run offline checks followed by live validation
-echo   RUN.bat help          Show this help
+echo   run.bat update        Refresh market data and write a forecast
+echo   run.bat test          Run offline software checks
+echo   run.bat validate      Run live-data walk-forward validation
+echo   run.bat release-check Run offline checks followed by live validation
+echo   run.bat help          Show this help
 echo.
 exit /b 0
 

@@ -18,7 +18,7 @@ Rupee Prediction System is a research application. A source being listed here do
 1. Fix the target definition for the entire experiment.
 2. Check the target's latest observation date and provenance; a source page that loads successfully can still contain stale data.
 3. Review missing features and point-in-time warnings.
-4. Run `run_real_market_validation.bat` and preserve its report.
+4. Run `run.bat validate` and preserve its report.
 5. Report horizons, sample window, row count, baselines, metrics, uncertainty and data-source limits together.
 6. Collect prospective shadow forecasts before their outcomes are known. Do not rewrite previous records after seeing outcomes.
 

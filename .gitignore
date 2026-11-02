@@ -1,4 +1,5 @@
 # Python environments and caches
+deps-installed.sha256
 .venv/
 venv/
 __pycache__/
