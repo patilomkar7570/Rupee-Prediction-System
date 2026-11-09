@@ -532,6 +532,7 @@ function initTabs() {
 
   const navSimple = $("nav-simple");
   const navGroups = $("nav-groups");
+  const navAdvanced = $("nav-advanced");
   const navOverview = $("nav-overview");
 
   function setMode(mode) {
@@ -545,6 +546,7 @@ function initTabs() {
 
     if (navSimple) navSimple.classList.toggle("active", mode === "simple");
     if (navGroups) navGroups.classList.toggle("active", mode === "groups");
+    if (navAdvanced) navAdvanced.classList.toggle("active", mode === "advanced");
     if (navOverview) navOverview.classList.toggle("active", mode === "advanced");
   }
 
@@ -566,11 +568,22 @@ function initTabs() {
       window.scrollTo({top: 0, behavior: "smooth"});
     });
   }
+  if (navAdvanced) {
+    navAdvanced.addEventListener("click", function (e) {
+      e.preventDefault();
+      setMode("advanced");
+      window.scrollTo({top: 0, behavior: "smooth"});
+    });
+  }
   ["overview", "forecasts", "factors", "evaluation", "quality", "sources", "news", "shadow"].forEach(function (sec) {
     const link = $("nav-" + sec);
     if (link) {
       link.addEventListener("click", function () {
         setMode("advanced");
+        const detailsEl = $(sec);
+        if (detailsEl && detailsEl.tagName === "DETAILS") {
+          detailsEl.open = true;
+        }
       });
     }
   });

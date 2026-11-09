@@ -14,17 +14,20 @@
       <a class="brand" href="#top"><span class="brand-mark">₹</span><span>Rupee<span class="brand-light">Lab</span></span></a>
       <p class="eyebrow">INTELLIGENCE SUITE</p>
       <nav>
-        <a href="#top" id="nav-simple" class="nav-link active">🌟 Executive Forecast</a>
+        <a href="#top" id="nav-simple" class="nav-link active">🌟 Executive View</a>
         <a href="#groups-view" id="nav-groups" class="nav-link">📊 Macro Groups</a>
-        <a href="#overview" id="nav-overview" class="nav-link">🔬 Quant Overview</a>
-        <a href="#forecasts" id="nav-forecasts" class="nav-link">Multi-Horizon Models</a>
-        <a href="#factors" id="nav-factors" class="nav-link">21-Factor Audit</a>
-        <a href="#evaluation" id="nav-evaluation" class="nav-link">Backtest Engine</a>
-        <a href="#quality" id="nav-quality" class="nav-link">Data Quality Gate</a>
-        <a href="#sources" id="nav-sources" class="nav-link">Data Sources</a>
-        <a href="#news" id="nav-news" class="nav-link">News & Context</a>
-        <a href="#shadow" id="nav-shadow" class="nav-link">Shadow Ledger</a>
+        <a href="#advanced-view" id="nav-advanced" class="nav-link">🔬 Quant Lab</a>
       </nav>
+      <details class="sidebar-sub-details">
+        <summary class="sidebar-sub-summary">⚙️ Audit Modules</summary>
+        <div class="sidebar-sub-links">
+          <a href="#factors" id="nav-factors" class="nav-link">21-Factor Audit</a>
+          <a href="#evaluation" id="nav-evaluation" class="nav-link">Backtest Engine</a>
+          <a href="#quality" id="nav-quality" class="nav-link">Quality Gate</a>
+          <a href="#sources" id="nav-sources" class="nav-link">Data Sources</a>
+          <a href="#shadow" id="nav-shadow" class="nav-link">Shadow Ledger</a>
+        </div>
+      </details>
       <div class="sidebar-note">
         <span class="live-dot"></span> Live Intelligence<br>
         <small>v1.0.0 · Rupee Prediction System</small>
@@ -337,150 +340,107 @@
 
       <!-- ================= TAB 3: DEEP QUANT ANALYTICS ================= -->
       <div id="advanced-view" class="view-container" style="display: none;">
-        <section class="section" id="overview">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">CURRENT METRICS</p>
-              <h2>Quantitative Market Overview</h2>
-            </div>
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">DEEP QUANTITATIVE LAB</p>
+            <h2>Econometric Models & Technical Audits</h2>
+            <p class="section-copy">Collapsible technical audit modules, statistical factor attributions, and out-of-sample backtest simulations.</p>
           </div>
-          <div class="metrics">
-            <article class="metric hero"><span>USD / INR</span><strong id="usd-inr">—</strong><small id="rate-date">No data loaded</small></article>
-            <article class="metric"><span>Brent crude</span><strong id="brent">—</strong><small>USD / barrel proxy</small></article>
-            <article class="metric"><span>Gold</span><strong id="gold">—</strong><small>USD / troy ounce</small></article>
-            <article class="metric"><span>Dollar index (DXY)</span><strong id="dxy">—</strong><small>Broad USD strength</small></article>
-            <article class="metric"><span>US 10Y yield</span><strong id="us10y">—</strong><small>Percent per year</small></article>
-            <article class="metric"><span>VIX</span><strong id="vix">—</strong><small>Global risk proxy</small></article>
-            <article class="metric"><span>RBI Repo rate</span><strong id="rbi-repo">—</strong><small>India policy rate</small></article>
-            <article class="metric"><span>India 10Y yield</span><strong id="india-10y">—</strong><small>Benchmark bond yield</small></article>
-            <article class="metric"><span>FX reserves</span><strong id="fx-reserves">—</strong><small>RBI total reserves</small></article>
-            <article class="metric"><span>India CPI YoY</span><strong id="india-cpi">—</strong><small>Consumer inflation</small></article>
-            <article class="metric"><span>Trade balance</span><strong id="trade-balance">—</strong><small>Monthly trade balance</small></article>
-            <article class="metric"><span>FPI net flows</span><strong id="fpi-flows">—</strong><small>Foreign portfolio flows</small></article>
+          <div class="field-row quant-target-row">
+            <label for="target-source">USD/INR Target:</label>
+            <select id="target-source">
+              <option value="yahoo_proxy">Yahoo Finance INR=X proxy</option>
+              <option value="fbil_csv">Imported FBIL/RBI-style CSV</option>
+              <option value="rbi_dbie_mirror">RBI DBIE historical table via mirror</option>
+            </select>
           </div>
-          <div class="two-col">
-            <article class="panel">
-              <div class="panel-head">
-                <div><p class="eyebrow">PRICE HISTORY</p><h3>USD/INR Historical Series</h3></div>
-                <span id="history-label" class="pill">Waiting for data</span>
-              </div>
-              <div id="chart" class="chart"><div class="empty">Refresh market history to draw the chart.</div></div>
-              <p class="footnote">USD/INR rising means the rupee weakened against the US dollar.</p>
-            </article>
-            <article class="panel">
-              <div class="panel-head">
-                <div><p class="eyebrow">MARKET CONTEXT</p><h3>Regime & target definition</h3></div>
-              </div>
-              <div id="regime" class="big-status">Not assessed</div>
-              <p id="regime-note" class="muted">Load data to assess available risk proxies.</p>
-              <hr>
-              <div class="field-row">
-                <label for="target-source">USD/INR target definition</label>
-                <select id="target-source">
-                  <option value="yahoo_proxy">Yahoo Finance INR=X proxy</option>
-                  <option value="fbil_csv">Imported FBIL/RBI-style CSV</option>
-                  <option value="rbi_dbie_mirror">RBI DBIE historical table via mirror</option>
-                </select>
-              </div>
-              <p id="target-note" class="footnote">Selecting a new target automatically updates and re-evaluates the models.</p>
-            </article>
-          </div>
-        </section>
+        </div>
+        <p id="target-note" class="footnote">Target: configured. Auto-updates and re-evaluates when changed.</p>
 
-        <section class="section" id="forecasts">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">MODEL OUTPUT</p>
-              <h2>Multi-horizon forecasts & probabilities</h2>
-              <p class="section-copy">Calibrated probability distributions and regularized model outputs across 1-day, 5-day, and 20-day horizons.</p>
-            </div>
+        <!-- Module 1: 21-Factor Audit (Open by default) -->
+        <details class="quant-card" id="factors" open>
+          <summary>📊 21-Factor Macroeconomic Factor Audit</summary>
+          <div class="quant-card-body">
+            <p class="muted">Detailed breakdown of normalized moves, signs, economic hypotheses, and net contribution to rupee pressure.</p>
+            <div id="factor-result" class="panel result-block"><p class="muted">Loading factor audit…</p></div>
           </div>
-          <div id="forecast-grid" class="forecast-grid">
-            <article class="forecast"><span>1 session</span><strong>—</strong><small>Loading forecast…</small></article>
-            <article class="forecast"><span>5 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
-            <article class="forecast"><span>20 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
-          </div>
-          <div id="prediction-detail" class="panel"><p class="muted">Probability, model comparison, numerical-rate forecast and uncertainty details appear here.</p></div>
-        </section>
+        </details>
 
-        <section class="section" id="factors">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">TRANSPARENT HYPOTHESES</p>
-              <h2>Macro factors audit (21 Factors)</h2>
-              <p class="section-copy">Detailed breakdown of normalized moves, signs, economic hypotheses, and net contribution to rupee pressure.</p>
+        <!-- Module 2: Model Output & Probability Distributions -->
+        <details class="quant-card" id="forecasts">
+          <summary>🔬 Multi-Horizon Model Probability Breakdown & Diagnostic JSON</summary>
+          <div class="quant-card-body">
+            <p class="muted">Calibrated probability distributions and regularized model outputs across 1-day, 5-day, and 20-day horizons.</p>
+            <div id="forecast-grid" class="forecast-grid">
+              <article class="forecast"><span>1 session</span><strong>—</strong><small>Loading forecast…</small></article>
+              <article class="forecast"><span>5 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
+              <article class="forecast"><span>20 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
             </div>
+            <div id="prediction-detail" class="panel"><p class="muted">Probability, model comparison, numerical-rate forecast and uncertainty details appear here.</p></div>
           </div>
-          <div id="factor-result" class="panel result-block"><p class="muted">Loading factor audit…</p></div>
-        </section>
+        </details>
 
-        <section class="section" id="evaluation">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">CHRONOLOGICAL TESTING</p>
-              <h2>Walk-forward evaluation & baselines</h2>
-              <p class="section-copy">Expanding-window backtest comparing machine learning models against Random-Walk and majority baselines.</p>
+        <!-- Module 3: Backtest Engine -->
+        <details class="quant-card" id="evaluation">
+          <summary>🧪 5-Year Chronological Walk-Forward Backtest Simulation</summary>
+          <div class="quant-card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+              <p class="muted" style="margin:0;">Expanding-window backtest comparing machine learning models against Random-Walk and majority baselines.</p>
+              <button id="backtest-button" class="button secondary" type="button">Run 5-Year Backtest Simulation</button>
             </div>
-            <button id="backtest-button" class="button secondary" type="button">Run 5-Year Backtest Simulation</button>
+            <div id="backtest-result" class="panel result-block"><p class="muted">Click "Run 5-Year Backtest Simulation" to evaluate expanding-window performance.</p></div>
           </div>
-          <div id="backtest-result" class="panel result-block"><p class="muted">Click "Run 5-Year Backtest Simulation" to evaluate expanding-window performance.</p></div>
-        </section>
+        </details>
 
-        <section class="section" id="quality">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">RELEASE GATE</p>
-              <h2>Data quality & point-in-time audit</h2>
-              <p class="section-copy">Automated checks verifying no duplicate dates, no lookahead leakage, and freshness criteria.</p>
-            </div>
+        <!-- Module 4: Quality Gate -->
+        <details class="quant-card" id="quality">
+          <summary>🛡️ Data Quality Gate & Point-in-Time Audit</summary>
+          <div class="quant-card-body">
+            <p class="muted">Automated checks verifying no duplicate dates, no lookahead leakage, and freshness criteria.</p>
+            <div id="quality-result" class="panel result-block"><p class="muted">Loading quality audit…</p></div>
           </div>
-          <div id="quality-result" class="panel result-block"><p class="muted">Loading quality audit…</p></div>
-        </section>
+        </details>
 
-        <section class="section" id="sources">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">PROVENANCE</p>
-              <h2>Data-source health</h2>
-              <p class="section-copy">Status, observation counts, and timestamps for all underlying market and macro feeds.</p>
+        <!-- Module 5: Sources -->
+        <details class="quant-card" id="sources">
+          <summary>🔌 Data Feed Ingestion & Health Status</summary>
+          <div class="quant-card-body">
+            <p class="muted">Status, observation counts, and timestamps for all underlying market and macro feeds.</p>
+            <div id="source-result" class="panel result-block"><p class="muted">Source status will appear after the first refresh.</p></div>
+            <div class="download-row">
+              <a href="/api/macro-template" download>Download macro input template ↗</a>
+              <a href="/api/event-template" download>Download event template ↗</a>
+              <a href="/api/official-reference-template" download>Download reference-rate template ↗</a>
+              <a href="/api/factor-weights-template" download>Download factor-weight template ↗</a>
             </div>
           </div>
-          <div id="source-result" class="panel result-block"><p class="muted">Source status will appear after the first refresh.</p></div>
-          <div class="download-row">
-            <a href="/api/macro-template" download>Download macro input template ↗</a>
-            <a href="/api/event-template" download>Download event template ↗</a>
-            <a href="/api/official-reference-template" download>Download reference-rate template ↗</a>
-            <a href="/api/factor-weights-template" download>Download factor-weight template ↗</a>
-          </div>
-        </section>
+        </details>
 
-        <section class="section" id="news">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">CONTEXT ONLY</p>
-              <h2>News & macroeconomic events</h2>
-              <p class="section-copy">Live global financial news headlines with optional local Ollama commentary.</p>
+        <!-- Module 6: Shadow Ledger -->
+        <details class="quant-card" id="shadow">
+          <summary>📒 Prospective Shadow Forecast Ledger</summary>
+          <div class="quant-card-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+              <p class="muted" style="margin:0;">Record snapshots before outcomes occur to score out-of-sample skill as future trading sessions unfold.</p>
+              <button id="record-shadow" class="button primary" type="button">Save Forecast Snapshot</button>
             </div>
+            <div id="shadow-result" class="panel result-block"><p class="muted">Loading ledger…</p></div>
           </div>
-          <div class="field-row">
-            <label for="ollama-model">Local Ollama model</label>
-            <input id="ollama-model" value="qwen2.5:7b" maxlength="100">
-            <button id="analyze-button" class="button secondary" type="button">Explain with local model</button>
-          </div>
-          <div id="news-result" class="panel result-block"><p class="muted">Loading headlines…</p></div>
-        </section>
+        </details>
 
-        <section class="section" id="shadow">
-          <div class="section-title">
-            <div>
-              <p class="eyebrow">PROSPECTIVE VALIDATION</p>
-              <h2>Shadow-forecast ledger</h2>
-              <p class="section-copy">Record snapshots before outcomes occur to score out-of-sample skill as future trading sessions unfold.</p>
+        <!-- Module 7: News -->
+        <details class="quant-card" id="news">
+          <summary>📰 Macro News Headlines & Local AI Analysis</summary>
+          <div class="quant-card-body">
+            <p class="muted">Live global financial news headlines with optional local Ollama commentary.</p>
+            <div class="field-row">
+              <label for="ollama-model">Local Ollama model</label>
+              <input id="ollama-model" value="qwen2.5:7b" maxlength="100">
+              <button id="analyze-button" class="button secondary" type="button">Explain with local model</button>
             </div>
-            <button id="record-shadow" class="button primary" type="button">Save Forecast Snapshot</button>
+            <div id="news-result" class="panel result-block"><p class="muted">Loading headlines…</p></div>
           </div>
-          <div id="shadow-result" class="panel result-block"><p class="muted">Loading ledger…</p></div>
-        </section>
+        </details>
       </div>
 
       <footer>
