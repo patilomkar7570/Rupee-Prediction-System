@@ -1,4 +1,4 @@
-"""FastAPI service for Rupee Prediction System v4.1.0-rc1."""
+"""FastAPI service for Rupee Prediction System v1.0.0."""
 from __future__ import annotations
 from pathlib import Path
 from typing import Any

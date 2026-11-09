@@ -1,4 +1,4 @@
-# Validation report — v4.1.0-rc1
+# Validation report — v1.0.0
 
 ## Scope
 

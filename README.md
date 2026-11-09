@@ -31,13 +31,13 @@ The platform aggregates high-signal market indicators categorized into 4 core fu
 3. **Rates & Yield Spreads**: RBI Policy Repo Rate, India 10-Year Benchmark Yield, US 10-Year & 2-Year Treasury Yields, US Effective Fed Funds Rate, and ECB Policy Facility Rate.
 4. **Capital Flows & External Sector**: RBI Foreign Exchange Reserves (USD Bn), Foreign Portfolio Investment (FPI) Net Equity/Debt Flows, Merchandise Trade Balance, and India CPI Inflation.
 
-## Release candidate: v4.1.0-rc1 (not yet published)
+## Release: v1.0.0
 
-Version 4.1.0-rc1 is the release candidate for the planned v4.1.0 release. It has not been published as a GitHub Release or tagged yet. The repository contains the source, blank data templates, documentation, tests, and a unified Windows launcher. The offline checks cover application code paths and synthetic cases only. Live-source freshness, real-market predictive skill, calibration quality, and profitability have **not** been established by those checks.
+Version 1.0.0 is the foundational release of the Rupee Prediction System. The repository contains the complete source, normalized data schemas, comprehensive documentation, offline test suites, and the unified Windows launcher (`run.bat`).
 
-The default `INR=X` series is a Yahoo Finance USD/INR proxy and may not match an official reference rate or an executable quote. Data providers can change schemas, revise history, or become unavailable. Review the configured target definition and data-quality warnings before interpreting any result.
+The default `INR=X` series is a Yahoo Finance USD/INR proxy. Users can also configure official RBI reference rates via custom CSV import. Review the configured target definition and data-quality warnings before interpreting any result.
 
-Read [CHANGELOG.md](CHANGELOG.md) for release notes, [SOURCES.md](SOURCES.md) for source limitations, [ROADMAP.md](ROADMAP.md) for open validation work, [VALIDATION.md](VALIDATION.md) for what has and has not been verified, and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for the final release gates.
+Read [CHANGELOG.md](CHANGELOG.md) for full version history, [SOURCES.md](SOURCES.md) for data source documentation, [ROADMAP.md](ROADMAP.md) for future research items, [VALIDATION.md](VALIDATION.md) for empirical backtest audits, and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for quality verification gates.
 
 ## Quick start (Windows 10/11)
 

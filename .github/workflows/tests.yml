@@ -44,7 +44,7 @@ jobs:
       - name: Run offline and API smoke tests
         run: python -m unittest discover -s tests -v
       - name: Check release metadata and the single Windows launcher
-        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','run.bat','requirements.txt','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[p for p in required if not Path(p).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); print('Missing release files:', missing); print('Root batch files:', launchers); assert not missing; assert launchers == ['run.bat']; assert Path('VERSION').read_text().strip() == '4.1.0-rc1'"
+        run: python -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','backend/data_processor.py','frontend/index.html','frontend/app.js','frontend/style.css','run.bat','requirements.txt','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[p for p in required if not Path(p).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); print('Missing release files:', missing); print('Root batch files:', launchers); assert not missing; assert launchers == ['run.bat']; assert Path('VERSION').read_text().strip() == '1.0.0'"
 
   package-release-candidate:
     name: Package release candidate
@@ -59,8 +59,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p dist
-          archive="Rupee-Prediction-System-v4.1.0-rc1.zip"
-          git archive --format=zip --prefix="Rupee-Prediction-System-v4.1.0-rc1/" HEAD -o "dist/$archive"
+          archive="Rupee-Prediction-System-v1.0.0.zip"
+          git archive --format=zip --prefix="Rupee-Prediction-System-v1.0.0/" HEAD -o "dist/$archive"
           (cd dist && sha256sum "$archive" > SHA256SUMS.txt)
       - name: Verify archive SHA-256 checksum
         run: cd dist && sha256sum --check SHA256SUMS.txt
@@ -69,7 +69,7 @@ jobs:
           python - <<'PY'
           from zipfile import ZipFile
 
-          archive = "dist/Rupee-Prediction-System-v4.1.0-rc1.zip"
+          archive = "dist/Rupee-Prediction-System-v1.0.0.zip"
           with ZipFile(archive) as bundle:
               names = bundle.namelist()
           required = [
@@ -80,7 +80,7 @@ jobs:
               "tests/test_launcher_contract.py",
           ]
           missing = [p for p in required if not any(n.endswith("/" + p) for n in names)]
-          prefix = "Rupee-Prediction-System-v4.1.0-rc1/"
+          prefix = "Rupee-Prediction-System-v1.0.0/"
           root_batch_files = sorted(
               n[len(prefix):] for n in names
               if n.startswith(prefix)
@@ -104,9 +104,9 @@ jobs:
       - name: Upload source ZIP and SHA-256 checksum
         uses: actions/upload-artifact@v7
         with:
-          name: rupee-prediction-system-v4.1.0-rc1
+          name: rupee-prediction-system-v1.0.0
           path: |
-            dist/Rupee-Prediction-System-v4.1.0-rc1.zip
+            dist/Rupee-Prediction-System-v1.0.0.zip
             dist/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14

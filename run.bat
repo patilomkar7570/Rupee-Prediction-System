@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableExtensions
 cd /d "%~dp0"
-title Rupee Prediction System v4.1.0-rc1
+title Rupee Prediction System v1.0.0
 
-set "APP_VERSION=4.1.0-rc1"
+set "APP_VERSION=1.0.0"
 set "APP_URL=http://127.0.0.1:8000"
 set "MODE=%~1"
 if not defined MODE set "MODE=start"
@@ -178,7 +178,7 @@ if errorlevel 1 (
 )
 
 echo [4/4] Checking required release files, version, and the single-launcher rule...
-"%PYTHON_EXE%" -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','requirements.txt','frontend/index.html','frontend/app.js','frontend/style.css','run.bat','backend/main.py','backend/paths.py','backend/validate_real_data.py','data/macro_inputs_template.csv','data/event_inputs_template.csv','data/factor_weights_template.csv','backend/india_macro_sources.py','backend/factor_audit.py','backend/numerical_forecast.py','backend/feature_ablation.py','backend/shadow_forecasts.py','backend/target_source.py','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','data/official_usdinr_reference_template.csv','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[x for x in required if not Path(x).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); version=Path('VERSION').read_text().strip() if Path('VERSION').exists() else ''; print('Missing files:', missing); print('Root batch files:', launchers); print('Version:', version); raise SystemExit(bool(missing) or launchers != ['run.bat'] or version != '4.1.0-rc1')"
+"%PYTHON_EXE%" -c "from pathlib import Path; required=['VERSION','README.md','ROADMAP.md','LICENSE','CHANGELOG.md','VALIDATION.md','.gitignore','requirements.txt','frontend/index.html','frontend/app.js','frontend/style.css','run.bat','backend/main.py','backend/paths.py','backend/validate_real_data.py','data/macro_inputs_template.csv','data/event_inputs_template.csv','data/factor_weights_template.csv','backend/india_macro_sources.py','backend/factor_audit.py','backend/numerical_forecast.py','backend/feature_ablation.py','backend/shadow_forecasts.py','backend/target_source.py','backend/data_quality.py','backend/evaluation_uncertainty.py','backend/operations.py','backend/http_client.py','data/official_usdinr_reference_template.csv','tests/test_api_smoke.py','tests/test_release_guardrails.py','tests/test_launcher_contract.py','backend/point_in_time.py','SOURCES.md','CONTRIBUTING.md','SECURITY.md','RELEASE_CHECKLIST.md']; missing=[x for x in required if not Path(x).exists()]; launchers=sorted(p.name for p in Path('.').glob('*.bat')); version=Path('VERSION').read_text().strip() if Path('VERSION').exists() else ''; print('Missing files:', missing); print('Root batch files:', launchers); print('Version:', version); raise SystemExit(bool(missing) or launchers != ['run.bat'] or version != '1.0.0')"
 if errorlevel 1 exit /b 1
 exit /b 0
 
@@ -189,7 +189,7 @@ exit /b 0
 
 :usage
 echo.
-echo Rupee Prediction System v4.1.0-rc1
+echo Rupee Prediction System v1.0.0
 echo.
 echo Double-click run.bat to start the dashboard.
 echo Optional commands from a terminal in this folder:

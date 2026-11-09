@@ -55,7 +55,7 @@ MACRO_COLUMNS: Final[list[str]] = [
 ]
 
 HEADERS: Final[dict[str, str]] = {
-    "User-Agent": "curl/8.0 (compatible; Windows; RupeePredictionResearch/4.1.0)",
+    "User-Agent": "curl/8.0 (compatible; Windows; RupeePredictionResearch/1.0.0)",
     "Accept": "text/csv,application/vnd.ms-excel,application/octet-stream,*/*",
 }
 

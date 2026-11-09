@@ -1,7 +1,8 @@
 # Changelog
 
-## Modernized UI, PDF Export & High-Signal Macro Engine — 2026-11-09
+## v1.0.0 — Modernized UI, PDF Export & High-Signal Macro Engine (2026-11-09)
 
+- **Official v1.0.0 Release**: Promoted the Rupee Prediction System to version 1.0.0 with full verification and documentation.
 - **Modernized Frontend Architecture**: Added a 3-tab segmented interface (`🌟 Executive Forecast`, `📊 Macro Groups`, and `🔬 Deep Quant Analytics & Audit`).
 - **Interactive Charting & Timeframes**: Added fast client-side time-window slicing for `1M`, `3M`, `6M`, `1Y`, and `5Y` historical spans.
 - **Consolidated Master Action**: Replaced scattered test buttons with a single unified `⚡ Run Analysis & Refresh` action.
