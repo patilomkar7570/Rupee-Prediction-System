@@ -12,6 +12,7 @@ from .confidence import confidence_assessment
 from .probability_calibration import CLASS_ORDER, align_probabilities, fit_probability_calibrator, apply_probability_calibrator, probability_metrics
 from .risk_features import detect_regime, detect_feature_drift
 from .numerical_forecast import run_numerical_forecast
+import concurrent.futures
 from .evaluation_uncertainty import balanced_accuracy_interval, balanced_accuracy_difference_interval
 
 MODEL_CANDIDATES = ["Market-price Logistic", "Macro Logistic", "Macro Random Forest", "Macro Gradient Boosting"]
@@ -149,12 +150,14 @@ def predict_next_session() -> dict[str, Any]:
     prices = load_price_data()
     if len(prices) < 400:
         raise ValueError(f"Only {len(prices)} daily rows are available. Fetch more history; v4 recommends at least 400 rows for multi-horizon testing.")
-    horizon_results = []
-    for horizon in HORIZONS:
-        frame = make_feature_frame(prices, horizon)
-        report, _ = _fit_and_predict_holdout(frame, horizon)
-        report["numerical_forecast"] = run_numerical_forecast(prices, frame, horizon)
-        horizon_results.append(report)
+    def _compute_single_horizon(h: int) -> dict[str, Any]:
+        frame = make_feature_frame(prices, h)
+        report, _ = _fit_and_predict_holdout(frame, h)
+        report["numerical_forecast"] = run_numerical_forecast(prices, frame, h)
+        return report
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        horizon_results = list(pool.map(_compute_single_horizon, HORIZONS))
     primary = horizon_results[0]
     factors = analyse_factors(prices)
     regime = detect_regime(prices)

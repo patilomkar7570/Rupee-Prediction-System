@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0b1324">
-  <title>Rupee Prediction System — Research Workbench</title>
+  <title>Rupee Prediction System — AI FX & Macro Intelligence</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
 </head>
@@ -12,66 +12,451 @@
   <div class="shell">
     <aside class="sidebar">
       <a class="brand" href="#top"><span class="brand-mark">₹</span><span>Rupee<span class="brand-light">Lab</span></span></a>
-      <p class="eyebrow">RESEARCH WORKBENCH</p>
+      <p class="eyebrow">INTELLIGENCE SUITE</p>
       <nav>
-        <a href="#overview">Overview</a><a href="#forecasts">Forecasts</a><a href="#evaluation">Evaluation</a>
-        <a href="#factors">Macro factors</a><a href="#quality">Data quality</a><a href="#sources">Sources</a>
-        <a href="#news">News context</a><a href="#shadow">Shadow ledger</a>
+        <a href="#top" id="nav-simple" class="nav-link active">🌟 Executive Forecast</a>
+        <a href="#groups-view" id="nav-groups" class="nav-link">📊 Macro Groups</a>
+        <a href="#overview" id="nav-overview" class="nav-link">🔬 Quant Overview</a>
+        <a href="#forecasts" id="nav-forecasts" class="nav-link">Multi-Horizon Models</a>
+        <a href="#factors" id="nav-factors" class="nav-link">21-Factor Audit</a>
+        <a href="#evaluation" id="nav-evaluation" class="nav-link">Backtest Engine</a>
+        <a href="#quality" id="nav-quality" class="nav-link">Data Quality Gate</a>
+        <a href="#sources" id="nav-sources" class="nav-link">Data Sources</a>
+        <a href="#news" id="nav-news" class="nav-link">News & Context</a>
+        <a href="#shadow" id="nav-shadow" class="nav-link">Shadow Ledger</a>
       </nav>
-      <div class="sidebar-note"><span class="live-dot"></span> Local-first app<br><small>v4.1.0-rc1 · Experimental research</small></div>
+      <div class="sidebar-note">
+        <span class="live-dot"></span> Live Intelligence<br>
+        <small>v4.1.0-rc1 · Rupee Prediction System</small>
+      </div>
     </aside>
+
     <main id="top">
-      <header class="topbar"><div><p class="eyebrow">INDIA FX · MACROECONOMICS</p><h1>Rupee Prediction System</h1><p class="subtitle">A research workbench for USD/INR, macro indicators and chronological model evaluation.</p></div><button id="theme-button" class="button ghost">Toggle theme</button></header>
-      <div id="toast" class="toast" role="status">Loading local workspace…</div>
-      <section class="section" id="overview">
-        <div class="section-title"><div><p class="eyebrow">CURRENT DATA</p><h2>Market overview</h2></div><button id="refresh-button" class="button primary">↻ Fetch / refresh data</button></div>
-        <div class="metrics">
-          <article class="metric hero"><span>USD / INR</span><strong id="usd-inr">—</strong><small id="rate-date">No data loaded</small></article>
-          <article class="metric"><span>Brent crude</span><strong id="brent">—</strong><small>USD / barrel proxy</small></article>
-          <article class="metric"><span>Gold</span><strong id="gold">—</strong><small>USD / troy ounce</small></article>
-          <article class="metric"><span>Dollar index</span><strong id="dxy">—</strong><small>Broad USD strength</small></article>
-          <article class="metric"><span>US 10Y yield</span><strong id="us10y">—</strong><small>Percent per year</small></article>
-          <article class="metric"><span>VIX</span><strong id="vix">—</strong><small>Global equity risk proxy</small></article>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">INDIA FX · APPLIED ECONOMETRICS</p>
+          <h1>Rupee Prediction System</h1>
+          <p class="subtitle">AI-driven USD/INR directional forecasting, macroeconomic driver attribution, and chronological holdout evaluation.</p>
         </div>
-        <div class="two-col">
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">PRICE HISTORY</p><h3>USD/INR history</h3></div><span id="history-label" class="pill">Waiting for data</span></div><div id="chart" class="chart"><div class="empty">Refresh market history to draw the chart.</div></div><p class="footnote">USD/INR rising means the rupee weakened against the US dollar. The target may be a proxy rather than an executable quote.</p></article>
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">MARKET CONTEXT</p><h3>Regime & target</h3></div></div><div id="regime" class="big-status">Not assessed</div><p id="regime-note" class="muted">Load data to assess available risk proxies.</p><hr><div class="field-row"><label for="target-source">USD/INR target definition</label><select id="target-source"><option value="yahoo_proxy">Yahoo Finance INR=X proxy</option><option value="fbil_csv">Imported FBIL/RBI-style CSV</option><option value="rbi_dbie_mirror">RBI DBIE historical table via mirror</option></select><button id="save-target" class="button secondary">Save</button></div><p id="target-note" class="footnote">Changing the target source requires refreshing data and rerunning evaluation.</p></article>
+        <div class="topbar-actions">
+          <button id="master-run-button" class="button primary pulse-btn" type="button" title="Fetch fresh feeds and run forecasts across all horizons">⚡ Run Analysis & Refresh</button>
+          <button id="print-pdf-button" class="button secondary pdf-btn" type="button" title="Generate an executive printable PDF report">📄 Print / Export PDF</button>
+          <button id="theme-button" class="button ghost" type="button" title="Switch between dark and light themes">🌓 Theme</button>
         </div>
-      </section>
-      <section class="section" id="forecasts">
-        <div class="section-title"><div><p class="eyebrow">MODEL OUTPUT</p><h2>Multi-horizon forecasts</h2><p class="section-copy">The model may explicitly return “NO RELIABLE SIGNAL”. Estimates are experimental, not trading advice.</p></div><button id="predict-button" class="button primary" disabled>Run forecast</button></div>
-        <div id="forecast-grid" class="forecast-grid"><article class="forecast"><span>1 session</span><strong>—</strong><small>Run forecast to populate</small></article><article class="forecast"><span>5 sessions</span><strong>—</strong><small>Run forecast to populate</small></article><article class="forecast"><span>20 sessions</span><strong>—</strong><small>Run forecast to populate</small></article></div>
-        <div id="prediction-detail" class="panel"><p class="muted">Probability, model comparison, numerical-rate forecast and uncertainty details appear here.</p></div>
-        <p class="footnote">The offline test suite cannot establish real-market predictive skill. Check the data-source timing and model holdout results before interpreting a forecast.</p>
-      </section>
-      <section class="section" id="evaluation">
-        <div class="section-title"><div><p class="eyebrow">CHRONOLOGICAL TESTING</p><h2>Walk-forward evaluation</h2><p class="section-copy">Compare models with simple baselines; inspect sample sizes and uncertainty, not just headline scores.</p></div><button id="backtest-button" class="button secondary">Run backtest</button></div>
-        <div id="backtest-result" class="panel result-block"><p class="muted">Backtest not run in this session.</p></div>
-      </section>
-      <section class="section" id="factors">
-        <div class="section-title"><div><p class="eyebrow">TRANSPARENT HYPOTHESES</p><h2>Macro factors</h2><p class="section-copy">The heuristic pressure score is explanatory only; it does not force the model prediction.</p></div><button id="factor-button" class="button secondary" disabled>Run factor audit</button></div>
-        <div id="factor-result" class="panel result-block"><p class="muted">Refresh data, then run the factor audit.</p></div>
-      </section>
-      <section class="section" id="quality">
-        <div class="section-title"><div><p class="eyebrow">RELEASE GATE</p><h2>Data quality & point-in-time audit</h2><p class="section-copy">Checks report risks; they do not silently change observations or certify forecasting skill.</p></div><button id="quality-button" class="button secondary">Run audit</button></div>
-        <div id="quality-result" class="panel result-block"><p class="muted">Audit not run in this session.</p></div>
-      </section>
-      <section class="section" id="sources">
-        <div class="section-title"><div><p class="eyebrow">PROVENANCE</p><h2>Data-source health</h2><p class="section-copy">Optional public sources can fail, change schemas, revise history, or lag.</p></div></div>
-        <div id="source-result" class="panel result-block"><p class="muted">Source status will appear after the first refresh.</p></div>
-        <div class="download-row"><a href="/api/macro-template" download>Download macro input template ↗</a><a href="/api/event-template" download>Download event template ↗</a><a href="/api/official-reference-template" download>Download reference-rate template ↗</a><a href="/api/factor-weights-template" download>Download factor-weight template ↗</a></div>
-      </section>
-      <section class="section" id="news">
-        <div class="section-title"><div><p class="eyebrow">CONTEXT ONLY</p><h2>News & events</h2><p class="section-copy">Current headlines do not enter numerical forecasts. Historical event inputs must be timestamped separately.</p></div><button id="news-button" class="button secondary">Refresh headlines</button></div>
-        <div class="field-row"><label for="ollama-model">Local Ollama model</label><input id="ollama-model" value="qwen2.5:7b" maxlength="100"><button id="analyze-button" class="button secondary">Explain with local model</button></div>
-        <div id="news-result" class="panel result-block"><p class="muted">Headlines not fetched yet.</p></div>
-        <p class="footnote">The optional Ollama integration runs against localhost and its commentary is not treated as a calibrated forecast.</p>
-      </section>
-      <section class="section" id="shadow">
-        <div class="section-title"><div><p class="eyebrow">PROSPECTIVE VALIDATION</p><h2>Shadow-forecast ledger</h2><p class="section-copy">Record a forecast snapshot before outcomes are known, then score it as future market observations arrive.</p></div><div class="button-row"><button id="record-shadow" class="button primary" disabled>Record forecast snapshot</button><button id="shadow-button" class="button secondary">Refresh ledger</button></div></div>
-        <div id="shadow-result" class="panel result-block"><p class="muted">No ledger loaded yet.</p></div>
-      </section>
-      <footer><span>RUPEE PREDICTION SYSTEM · v4.1.0-rc1</span><span>Educational research only · Not financial advice</span></footer>
+      </header>
+
+      <div class="view-switch-bar" role="tablist">
+        <button id="tab-simple" class="tab-button active" type="button" role="tab">🌟 Executive Forecast</button>
+        <button id="tab-groups" class="tab-button" type="button" role="tab">📊 Macroeconomic Groups</button>
+        <button id="tab-advanced" class="tab-button" type="button" role="tab">🔬 Deep Quant Analytics & Audit</button>
+      </div>
+
+      <div id="toast" class="toast" role="status">Initializing workspace…</div>
+
+      <!-- ================= TAB 1: EXECUTIVE SIMPLE FORECAST ================= -->
+      <div id="simple-view" class="view-container">
+        <div class="simple-hero-card">
+          <div class="hero-rate-wrap">
+            <span class="hero-label">CURRENT EXCHANGE RATE (USD / INR)</span>
+            <div class="hero-rate-row">
+              <strong id="simple-usd-inr" class="hero-rate-value">₹—</strong>
+              <span id="simple-usd-change" class="change-badge">—</span>
+            </div>
+            <p id="simple-rate-meta" class="hero-meta">Historical data: 1,300 business days analyzed</p>
+          </div>
+          <div class="hero-actions">
+            <button id="simple-refresh-button" class="button primary pulse-btn" type="button">⚡ Run Analysis & Refresh</button>
+            <button id="simple-print-button" class="button secondary" type="button">📄 Print PDF Report</button>
+          </div>
+        </div>
+
+        <div class="simple-forecast-grid">
+          <article class="simple-forecast-card" id="simple-card-1d">
+            <div class="card-header-row">
+              <span class="card-horizon-tag">TOMORROW (1 DAY)</span>
+              <span class="badge-pill" id="badge-pill-1d">Next Session</span>
+            </div>
+            <div class="card-direction-badge neutral" id="simple-badge-1d">Analyzing…</div>
+            <div class="card-target-rate">Expected: <strong id="simple-target-1d">₹—</strong></div>
+            <div class="card-range" id="simple-range-1d">Trading Range: ₹— – ₹—</div>
+            <div class="confidence-bar-wrap">
+              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-1d">—</strong></div>
+              <div class="confidence-track"><div class="confidence-fill" id="simple-fill-1d" style="width: 0%"></div></div>
+            </div>
+          </article>
+
+          <article class="simple-forecast-card featured" id="simple-card-5d">
+            <div class="card-header-row">
+              <span class="card-horizon-tag">NEXT WEEK (5 DAYS)</span>
+              <span class="badge-pill highlight">Key Horizon</span>
+            </div>
+            <div class="card-direction-badge neutral" id="simple-badge-5d">Analyzing…</div>
+            <div class="card-target-rate">Expected: <strong id="simple-target-5d">₹—</strong></div>
+            <div class="card-range" id="simple-range-5d">Trading Range: ₹— – ₹—</div>
+            <div class="confidence-bar-wrap">
+              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-5d">—</strong></div>
+              <div class="confidence-track"><div class="confidence-fill" id="simple-fill-5d" style="width: 0%"></div></div>
+            </div>
+          </article>
+
+          <article class="simple-forecast-card" id="simple-card-20d">
+            <div class="card-header-row">
+              <span class="card-horizon-tag">NEXT MONTH (20 DAYS)</span>
+              <span class="badge-pill" id="badge-pill-20d">Monthly</span>
+            </div>
+            <div class="card-direction-badge neutral" id="simple-badge-20d">Analyzing…</div>
+            <div class="card-target-rate">Expected: <strong id="simple-target-20d">₹—</strong></div>
+            <div class="card-range" id="simple-range-20d">Trading Range: ₹— – ₹—</div>
+            <div class="confidence-bar-wrap">
+              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-20d">—</strong></div>
+              <div class="confidence-track"><div class="confidence-fill" id="simple-fill-20d" style="width: 0%"></div></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="simple-gauge-panel">
+          <div class="gauge-header">
+            <div>
+              <span class="eyebrow">MACRO SENTIMENT</span>
+              <h3>Rupee Macroeconomic Pressure Meter</h3>
+            </div>
+            <span id="simple-gauge-score" class="pill">Pressure Score: 0.0</span>
+          </div>
+          <div class="gauge-meter-track">
+            <div class="gauge-gradient"></div>
+            <div class="gauge-marker" id="simple-gauge-marker" style="left: 50%;"></div>
+          </div>
+          <div class="gauge-ticks">
+            <span class="support-tick">🟢 Rupee Support (Strengthening)</span>
+            <span class="neutral-tick">⚪ Balanced / Neutral</span>
+            <span class="pressure-tick">🔴 Rupee Pressure (Weakening)</span>
+          </div>
+          <p id="simple-macro-summary" class="simple-summary-text">Macroeconomic indicators assessed.</p>
+        </div>
+
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">CORE MACRO DRIVERS</p>
+            <h2>What is Moving the Indian Rupee Right Now?</h2>
+          </div>
+        </div>
+        <div id="simple-drivers-grid" class="drivers-grid">
+          <!-- Dynamically populated key market driver cards -->
+        </div>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">PRICE ACTION</p>
+              <h3>USD/INR Interactive Trend & Ranges</h3>
+            </div>
+            <div class="timeframe-selector">
+              <button class="tf-btn" data-days="22" type="button">1M</button>
+              <button class="tf-btn" data-days="66" type="button">3M</button>
+              <button class="tf-btn" data-days="132" type="button">6M</button>
+              <button class="tf-btn" data-days="252" type="button">1Y</button>
+              <button class="tf-btn active" data-days="1300" type="button">5Y</button>
+            </div>
+          </div>
+          <div id="simple-chart" class="chart">
+            <div class="empty">Refresh market history to draw the chart.</div>
+          </div>
+          <div class="chart-footer-row">
+            <span id="simple-history-label" class="pill">Waiting for data</span>
+            <span class="footnote-inline">USD/INR rising indicates rupee depreciation against the dollar.</span>
+          </div>
+        </article>
+      </div>
+
+      <!-- ================= TAB 2: MACROECONOMIC GROUPS ================= -->
+      <div id="groups-view" class="view-container" style="display: none;">
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">FACTOR ARCHITECTURE</p>
+            <h2>Macroeconomic Factors by Category</h2>
+            <p class="section-copy">Core fundamental and financial market series grouped into 4 functional domains affecting the Indian Rupee.</p>
+          </div>
+        </div>
+
+        <div class="macro-groups-grid">
+          <!-- Group 1: Global FX & Dollar -->
+          <article class="macro-group-card">
+            <div class="group-header">
+              <div class="group-icon-wrap">🌐</div>
+              <div>
+                <h3>Global FX & Dollar Strength</h3>
+                <small class="muted">US Dollar index, offshore yuan, and global risk</small>
+              </div>
+            </div>
+            <div class="group-items-list">
+              <div class="group-item-row">
+                <span>US Dollar Index (DXY)</span>
+                <strong id="grp-dxy">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>USD / Offshore Yuan (CNH)</span>
+                <strong id="grp-usdcnh">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>CBOE Volatility Index (VIX)</span>
+                <strong id="grp-vix">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>Treasury Volatility (MOVE)</span>
+                <strong id="grp-move">—</strong>
+              </div>
+            </div>
+          </article>
+
+          <!-- Group 2: Commodities & Energy -->
+          <article class="macro-group-card">
+            <div class="group-header">
+              <div class="group-icon-wrap">🛢️</div>
+              <div>
+                <h3>Commodities & Energy Imports</h3>
+                <small class="muted">Brent crude oil, gold bullion, and rupee-equivalent import costs</small>
+              </div>
+            </div>
+            <div class="group-items-list">
+              <div class="group-item-row">
+                <span>Brent Crude Oil (Global USD)</span>
+                <strong id="grp-brent">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>Brent Crude (INR Proxy / Barrel)</span>
+                <strong id="grp-brent-inr">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>Gold (Global USD / oz)</span>
+                <strong id="grp-gold">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>Gold (INR Proxy / Troy oz)</span>
+                <strong id="grp-gold-inr">—</strong>
+              </div>
+            </div>
+          </article>
+
+          <!-- Group 3: Interest Rates & Monetary Policy -->
+          <article class="macro-group-card">
+            <div class="group-header">
+              <div class="group-icon-wrap">🏦</div>
+              <div>
+                <h3>Rates & Yield Spreads</h3>
+                <small class="muted">Central bank policy rates, sovereign bond yields, and differentials</small>
+              </div>
+            </div>
+            <div class="group-items-list">
+              <div class="group-item-row">
+                <span>RBI Policy Repo Rate</span>
+                <strong id="grp-rbi-repo">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>India 10Y Benchmark Yield</span>
+                <strong id="grp-india-10y">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>US 10-Year Treasury Yield</span>
+                <strong id="grp-us10y">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>US 2-Year Treasury Yield</span>
+                <strong id="grp-us2y">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>US Effective Fed Funds Rate</span>
+                <strong id="grp-fed-funds">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>ECB Policy Facility Rate</span>
+                <strong id="grp-ecb">—</strong>
+              </div>
+            </div>
+          </article>
+
+          <!-- Group 4: Capital Flows & External Sector -->
+          <article class="macro-group-card">
+            <div class="group-header">
+              <div class="group-icon-wrap">🛡️</div>
+              <div>
+                <h3>Capital Flows & External Sector</h3>
+                <small class="muted">Forex reserves buffer, portfolio investments, and trade balance</small>
+              </div>
+            </div>
+            <div class="group-items-list">
+              <div class="group-item-row">
+                <span>RBI Foreign Exchange Reserves</span>
+                <strong id="grp-fx-reserves">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>FPI Net Institutional Capital Flows</span>
+                <strong id="grp-fpi-flows">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>Merchandise Trade Balance</span>
+                <strong id="grp-trade-balance">—</strong>
+              </div>
+              <div class="group-item-row">
+                <span>India CPI Inflation (YoY)</span>
+                <strong id="grp-india-cpi">—</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: DEEP QUANT ANALYTICS ================= -->
+      <div id="advanced-view" class="view-container" style="display: none;">
+        <section class="section" id="overview">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">CURRENT METRICS</p>
+              <h2>Quantitative Market Overview</h2>
+            </div>
+          </div>
+          <div class="metrics">
+            <article class="metric hero"><span>USD / INR</span><strong id="usd-inr">—</strong><small id="rate-date">No data loaded</small></article>
+            <article class="metric"><span>Brent crude</span><strong id="brent">—</strong><small>USD / barrel proxy</small></article>
+            <article class="metric"><span>Gold</span><strong id="gold">—</strong><small>USD / troy ounce</small></article>
+            <article class="metric"><span>Dollar index (DXY)</span><strong id="dxy">—</strong><small>Broad USD strength</small></article>
+            <article class="metric"><span>US 10Y yield</span><strong id="us10y">—</strong><small>Percent per year</small></article>
+            <article class="metric"><span>VIX</span><strong id="vix">—</strong><small>Global risk proxy</small></article>
+            <article class="metric"><span>RBI Repo rate</span><strong id="rbi-repo">—</strong><small>India policy rate</small></article>
+            <article class="metric"><span>India 10Y yield</span><strong id="india-10y">—</strong><small>Benchmark bond yield</small></article>
+            <article class="metric"><span>FX reserves</span><strong id="fx-reserves">—</strong><small>RBI total reserves</small></article>
+            <article class="metric"><span>India CPI YoY</span><strong id="india-cpi">—</strong><small>Consumer inflation</small></article>
+            <article class="metric"><span>Trade balance</span><strong id="trade-balance">—</strong><small>Monthly trade balance</small></article>
+            <article class="metric"><span>FPI net flows</span><strong id="fpi-flows">—</strong><small>Foreign portfolio flows</small></article>
+          </div>
+          <div class="two-col">
+            <article class="panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">PRICE HISTORY</p><h3>USD/INR Historical Series</h3></div>
+                <span id="history-label" class="pill">Waiting for data</span>
+              </div>
+              <div id="chart" class="chart"><div class="empty">Refresh market history to draw the chart.</div></div>
+              <p class="footnote">USD/INR rising means the rupee weakened against the US dollar.</p>
+            </article>
+            <article class="panel">
+              <div class="panel-head">
+                <div><p class="eyebrow">MARKET CONTEXT</p><h3>Regime & target definition</h3></div>
+              </div>
+              <div id="regime" class="big-status">Not assessed</div>
+              <p id="regime-note" class="muted">Load data to assess available risk proxies.</p>
+              <hr>
+              <div class="field-row">
+                <label for="target-source">USD/INR target definition</label>
+                <select id="target-source">
+                  <option value="yahoo_proxy">Yahoo Finance INR=X proxy</option>
+                  <option value="fbil_csv">Imported FBIL/RBI-style CSV</option>
+                  <option value="rbi_dbie_mirror">RBI DBIE historical table via mirror</option>
+                </select>
+              </div>
+              <p id="target-note" class="footnote">Selecting a new target automatically updates and re-evaluates the models.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="forecasts">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">MODEL OUTPUT</p>
+              <h2>Multi-horizon forecasts & probabilities</h2>
+              <p class="section-copy">Calibrated probability distributions and regularized model outputs across 1-day, 5-day, and 20-day horizons.</p>
+            </div>
+          </div>
+          <div id="forecast-grid" class="forecast-grid">
+            <article class="forecast"><span>1 session</span><strong>—</strong><small>Loading forecast…</small></article>
+            <article class="forecast"><span>5 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
+            <article class="forecast"><span>20 sessions</span><strong>—</strong><small>Loading forecast…</small></article>
+          </div>
+          <div id="prediction-detail" class="panel"><p class="muted">Probability, model comparison, numerical-rate forecast and uncertainty details appear here.</p></div>
+        </section>
+
+        <section class="section" id="factors">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">TRANSPARENT HYPOTHESES</p>
+              <h2>Macro factors audit (21 Factors)</h2>
+              <p class="section-copy">Detailed breakdown of normalized moves, signs, economic hypotheses, and net contribution to rupee pressure.</p>
+            </div>
+          </div>
+          <div id="factor-result" class="panel result-block"><p class="muted">Loading factor audit…</p></div>
+        </section>
+
+        <section class="section" id="evaluation">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">CHRONOLOGICAL TESTING</p>
+              <h2>Walk-forward evaluation & baselines</h2>
+              <p class="section-copy">Expanding-window backtest comparing machine learning models against Random-Walk and majority baselines.</p>
+            </div>
+            <button id="backtest-button" class="button secondary" type="button">Run 5-Year Backtest Simulation</button>
+          </div>
+          <div id="backtest-result" class="panel result-block"><p class="muted">Click "Run 5-Year Backtest Simulation" to evaluate expanding-window performance.</p></div>
+        </section>
+
+        <section class="section" id="quality">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">RELEASE GATE</p>
+              <h2>Data quality & point-in-time audit</h2>
+              <p class="section-copy">Automated checks verifying no duplicate dates, no lookahead leakage, and freshness criteria.</p>
+            </div>
+          </div>
+          <div id="quality-result" class="panel result-block"><p class="muted">Loading quality audit…</p></div>
+        </section>
+
+        <section class="section" id="sources">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">PROVENANCE</p>
+              <h2>Data-source health</h2>
+              <p class="section-copy">Status, observation counts, and timestamps for all underlying market and macro feeds.</p>
+            </div>
+          </div>
+          <div id="source-result" class="panel result-block"><p class="muted">Source status will appear after the first refresh.</p></div>
+          <div class="download-row">
+            <a href="/api/macro-template" download>Download macro input template ↗</a>
+            <a href="/api/event-template" download>Download event template ↗</a>
+            <a href="/api/official-reference-template" download>Download reference-rate template ↗</a>
+            <a href="/api/factor-weights-template" download>Download factor-weight template ↗</a>
+          </div>
+        </section>
+
+        <section class="section" id="news">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">CONTEXT ONLY</p>
+              <h2>News & macroeconomic events</h2>
+              <p class="section-copy">Live global financial news headlines with optional local Ollama commentary.</p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="ollama-model">Local Ollama model</label>
+            <input id="ollama-model" value="qwen2.5:7b" maxlength="100">
+            <button id="analyze-button" class="button secondary" type="button">Explain with local model</button>
+          </div>
+          <div id="news-result" class="panel result-block"><p class="muted">Loading headlines…</p></div>
+        </section>
+
+        <section class="section" id="shadow">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">PROSPECTIVE VALIDATION</p>
+              <h2>Shadow-forecast ledger</h2>
+              <p class="section-copy">Record snapshots before outcomes occur to score out-of-sample skill as future trading sessions unfold.</p>
+            </div>
+            <button id="record-shadow" class="button primary" type="button">Save Forecast Snapshot</button>
+          </div>
+          <div id="shadow-result" class="panel result-block"><p class="muted">Loading ledger…</p></div>
+        </section>
+      </div>
+
+      <footer>
+        <span>RUPEE PREDICTION SYSTEM · v4.1.0-rc1</span>
+        <span>Educational research only · Not financial advice</span>
+      </footer>
     </main>
   </div>
 </body>

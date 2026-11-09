@@ -99,7 +99,7 @@ def overview() -> dict[str, Any]:
     daily_change = (float(latest["USDINR"]) / float(previous["USDINR"]) - 1) * 100 if previous is not None and float(previous["USDINR"]) else None
     month_ago = prices.iloc[-min(22, len(prices))]
     month_change = (float(latest["USDINR"]) / float(month_ago["USDINR"]) - 1) * 100 if float(month_ago["USDINR"]) else None
-    history = [{"date": date.strftime("%Y-%m-%d"), "usdinr": round(float(row["USDINR"]), 4)} for date, row in prices.tail(180).iterrows()]
+    history = [{"date": date.strftime("%Y-%m-%d"), "usdinr": round(float(row["USDINR"]), 4)} for date, row in prices.tail(1300).iterrows()]
     factors = analyse_factors(prices)
     events = load_event_inputs()
     return {
@@ -111,6 +111,12 @@ def overview() -> dict[str, Any]:
         "us2y": _num(latest, "US2Y_YIELD", 3), "rbi_repo": _num(latest, "RBI_REPO_RATE", 3),
         "ecb_mro": _num(latest, "ECB_MRO_RATE", 3), "fed_funds": _num(latest, "FED_FUNDS_RATE", 3),
         "usdcnh": _num(latest, "USD_CNH", 4), "india_10y": _num(latest, "INDIA_10Y_BOND_YIELD", 3),
+        "india_cpi": _num(latest, "INDIA_CPI_YOY", 2),
+        "fx_reserves": _num(latest, "FX_RESERVES_USD_BN", 1),
+        "trade_balance": _num(latest, "INDIA_TRADE_BALANCE_USD_BN", 2),
+        "fpi_flows": _num(latest, "FPI_NET_FLOWS_USD_BN", 2),
+        "brent_inr": _num(latest, "BRENT_INR_PROXY", 2),
+        "gold_inr": _num(latest, "GOLD_INR_OZ_PROXY", 2),
         "daily_change_pct": round(float(daily_change), 4) if daily_change is not None else None,
         "approx_month_change_pct": round(float(month_change), 4) if month_change is not None else None,
         "history": history, "factor_analysis": factors, "market_regime": detect_regime(prices), "target_source": get_target_source(),

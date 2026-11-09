@@ -14,6 +14,8 @@ def add_flow_features(data: pd.DataFrame, features: dict[str, pd.Series]) -> Non
         if col not in data:
             continue
         s = pd.to_numeric(data[col], errors="coerce")
+        if not s.notna().any():
+            continue
         features[f"{col}_level"] = s
         # Differences, not percentage changes, are used for potentially negative/near-zero flows.
         for lag in (5, 20, 60):
@@ -22,9 +24,11 @@ def add_flow_features(data: pd.DataFrame, features: dict[str, pd.Series]) -> Non
         features[f"{col}_rolling_mean_60"] = s.rolling(60, min_periods=5).mean()
     if "FPI_NET_FLOWS_USD_BN" in data:
         fpi = pd.to_numeric(data["FPI_NET_FLOWS_USD_BN"], errors="coerce")
-        features["FPI_INFLOWS_20D_SUM"] = fpi.rolling(20, min_periods=1).sum()
-        features["FPI_OUTFLOW_FLAG"] = (fpi < 0).astype(float).where(fpi.notna())
+        if fpi.notna().any():
+            features["FPI_INFLOWS_20D_SUM"] = fpi.rolling(20, min_periods=1).sum()
+            features["FPI_OUTFLOW_FLAG"] = (fpi < 0).astype(float).where(fpi.notna())
     if "FX_RESERVES_USD_BN" in data:
         reserves = pd.to_numeric(data["FX_RESERVES_USD_BN"], errors="coerce")
-        features["FX_RESERVES_20D_CHANGE"] = reserves.diff(20)
-        features["FX_RESERVES_60D_CHANGE"] = reserves.diff(60)
+        if reserves.notna().any():
+            features["FX_RESERVES_20D_CHANGE"] = reserves.diff(20)
+            features["FX_RESERVES_60D_CHANGE"] = reserves.diff(60)

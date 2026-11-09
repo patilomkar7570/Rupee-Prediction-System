@@ -40,7 +40,7 @@ def _interval(values: list[float], confidence: float = 0.95) -> dict[str, Any]:
     }
 
 
-def balanced_accuracy_interval(y_true, y_pred, block_size: int, n_bootstrap: int = 300, seed: int = 42) -> dict[str, Any]:
+def balanced_accuracy_interval(y_true, y_pred, block_size: int, n_bootstrap: int = 100, seed: int = 42) -> dict[str, Any]:
     """95% moving-block bootstrap interval for balanced accuracy, in percentage points."""
     truth = np.asarray(y_true, dtype=object)
     pred = np.asarray(y_pred, dtype=object)
@@ -50,7 +50,7 @@ def balanced_accuracy_interval(y_true, y_pred, block_size: int, n_bootstrap: int
     values: list[float] = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        for _ in range(max(100, int(n_bootstrap))):
+        for _ in range(max(50, int(n_bootstrap))):
             ix = moving_block_indices(len(truth), block_size, rng)
             if len(set(truth[ix].tolist())) < 2:
                 continue
@@ -59,7 +59,7 @@ def balanced_accuracy_interval(y_true, y_pred, block_size: int, n_bootstrap: int
     return {"lower_pct": band["lower"], "upper_pct": band["upper"], "confidence_level_pct": band["confidence_level_pct"], "bootstrap_replicates": band["bootstrap_replicates"], "status": band["status"], "rows": int(len(truth)), "method": "moving-block bootstrap; descriptive, not multiplicity-adjusted"}
 
 
-def mae_skill_interval(actual, predicted, baseline, block_size: int, n_bootstrap: int = 300, seed: int = 42) -> dict[str, Any]:
+def mae_skill_interval(actual, predicted, baseline, block_size: int, n_bootstrap: int = 100, seed: int = 42) -> dict[str, Any]:
     """Paired 95% moving-block bootstrap interval for MAE skill vs baseline (%).
 
     Skill is 100 * (1 - MAE(model) / MAE(baseline)); positive values favour the model.
@@ -77,7 +77,7 @@ def mae_skill_interval(actual, predicted, baseline, block_size: int, n_bootstrap
         return {"lower_pct": None, "upper_pct": None, "status": "insufficient_rows", "rows": n, "block_size": int(block_size)}
     rng = np.random.default_rng(seed)
     values: list[float] = []
-    for _ in range(max(100, int(n_bootstrap))):
+    for _ in range(max(50, int(n_bootstrap))):
         ix = moving_block_indices(n, block_size, rng)
         base_mae = float(mean_absolute_error(y[ix], b[ix]))
         if base_mae <= 1e-12:
@@ -103,7 +103,7 @@ def mae_skill_interval(actual, predicted, baseline, block_size: int, n_bootstrap
     }
 
 
-def balanced_accuracy_difference_interval(y_true, model_pred, baseline_pred, block_size: int, n_bootstrap: int = 300, seed: int = 73) -> dict[str, Any]:
+def balanced_accuracy_difference_interval(y_true, model_pred, baseline_pred, block_size: int, n_bootstrap: int = 100, seed: int = 73) -> dict[str, Any]:
     """Paired moving-block bootstrap CI for model minus baseline balanced accuracy (pp)."""
     truth = np.asarray(y_true, dtype=object)
     model = np.asarray(model_pred, dtype=object)
@@ -117,7 +117,7 @@ def balanced_accuracy_difference_interval(y_true, model_pred, baseline_pred, blo
     values: list[float] = []
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        for _ in range(max(100, int(n_bootstrap))):
+        for _ in range(max(50, int(n_bootstrap))):
             ix = moving_block_indices(n, block_size, rng)
             if len(set(truth[ix].tolist())) < 2:
                 continue

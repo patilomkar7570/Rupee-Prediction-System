@@ -195,4 +195,67 @@ def analyse_factors(prices: pd.DataFrame) -> dict[str, Any]:
     else:
         label, detail = "Mixed / no strong pressure", "The transparent factor score does not show a strong directional tilt."
     coverage = round(100 * available_weight / total_weight, 1) if total_weight else 0.0
-    return {"as_of_date": latest_date, "pressure_score": round(pressure, 1), "pressure_label": label, "pressure_detail": detail, "factor_coverage_pct": coverage, "factors": rows, "factor_configuration": config_info, "method_note": "Heuristic factor pressure is for interpretation only; it does not set the forecast label. Weight signs are hypotheses, not causal estimates. Weights/signs can be edited in runtime/inputs/factor_weights.csv; changes are not auto-learned. Derived INR commodity proxies are excluded from the composite to avoid double-counting USDINR."}
+
+    pressuring = [r for r in rows if (r.get("contribution") or 0) > 0.03]
+    pressuring.sort(key=lambda x: x.get("contribution") or 0, reverse=True)
+    supporting = [r for r in rows if (r.get("contribution") or 0) < -0.03]
+    supporting.sort(key=lambda x: x.get("contribution") or 0)
+
+    if pressuring and supporting:
+        p_names = ", ".join(r["name"] for r in pressuring[:2])
+        s_names = ", ".join(r["name"] for r in supporting[:2])
+        human_summary = f"Rupee headwinds are currently driven by {p_names}, balanced against supportive cushions from {s_names}."
+    elif pressuring:
+        p_names = ", ".join(r["name"] for r in pressuring[:3])
+        human_summary = f"Rupee faces moderate depreciation pressure primarily driven by {p_names}."
+    elif supporting:
+        s_names = ", ".join(r["name"] for r in supporting[:3])
+        human_summary = f"Macro conditions are supportive of rupee stability, led by {s_names}."
+    else:
+        human_summary = "Macroeconomic factors are currently in broad balance with neutral directional tilt."
+
+    # Top curated 5 key market drivers with user-friendly formatting
+    driver_keys = ["BRENT", "DXY", "RBI_REPO_RATE", "FX_RESERVES_USD_BN", "FPI_NET_FLOWS_USD_BN"]
+    driver_map = {r["key"]: r for r in rows}
+    key_drivers = []
+    driver_icons = {
+        "BRENT": "🛢️", "DXY": "💵", "RBI_REPO_RATE": "🏦", "FX_RESERVES_USD_BN": "🛡️", "FPI_NET_FLOWS_USD_BN": "📈"
+    }
+    driver_friendly = {
+        "BRENT": ("Crude Oil (Brent)", "High oil prices raise India's import bill and dollar demand"),
+        "DXY": ("US Dollar Index (DXY)", "A stronger global USD puts downward pressure on emerging market FX"),
+        "RBI_REPO_RATE": ("RBI Policy Rate", "Higher domestic rates support capital retention and yield spread"),
+        "FX_RESERVES_USD_BN": ("Forex Reserves Buffer", "Large RBI reserves provide a strong defense against excessive volatility"),
+        "FPI_NET_FLOWS_USD_BN": ("Foreign Institutional Flows", "Net equity & debt inflows increase supply of USD in domestic markets"),
+    }
+    for k in driver_keys:
+        if k in driver_map:
+            item = driver_map[k]
+            contrib = item.get("contribution") or 0
+            tag = "Headwind (Pressure)" if contrib > 0.05 else ("Tailwind (Support)" if contrib < -0.05 else "Neutral")
+            f_name, f_why = driver_friendly.get(k, (item["name"], item["interpretation"]))
+            key_drivers.append({
+                "key": k,
+                "icon": driver_icons.get(k, "📊"),
+                "name": f_name,
+                "display_value": item["display_value"],
+                "change_label": item["change_label"],
+                "status": tag,
+                "simple_explanation": f_why,
+                "contribution": contrib,
+            })
+
+    return {
+        "as_of_date": latest_date,
+        "pressure_score": round(pressure, 1),
+        "pressure_label": label,
+        "pressure_detail": detail,
+        "human_summary": human_summary,
+        "factor_coverage_pct": coverage,
+        "factors": rows,
+        "top_pressuring_factors": pressuring[:5],
+        "top_supporting_factors": supporting[:5],
+        "key_market_drivers": key_drivers,
+        "factor_configuration": config_info,
+        "method_note": "Heuristic factor pressure is for interpretation only; it does not set the forecast label. Weight signs are hypotheses, not causal estimates. Weights/signs can be edited in runtime/inputs/factor_weights.csv; changes are not auto-learned. Derived INR commodity proxies are excluded from the composite to avoid double-counting USDINR.",
+    }

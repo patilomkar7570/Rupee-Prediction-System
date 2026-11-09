@@ -14,19 +14,22 @@ from .version import VERSION
 
 def build_get_session() -> Session:
     retry = Retry(
-        total=3,
-        connect=3,
+        total=2,
+        connect=2,
         read=2,
-        status=3,
-        backoff_factor=0.35,
+        status=2,
+        backoff_factor=0.2,
         status_forcelist=(429, 500, 502, 503, 504),
         allowed_methods=frozenset({"GET", "HEAD"}),
         respect_retry_after_header=True,
         raise_on_status=True,
     )
-    adapter = HTTPAdapter(max_retries=retry, pool_connections=8, pool_maxsize=8)
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=16, pool_maxsize=16)
     session = Session()
-    session.headers.update({"User-Agent": f"RupeePredictionResearch/{VERSION} (local educational research app)"})
+    session.headers.update({
+        "User-Agent": f"curl/8.0 (compatible; Windows; RupeePredictionResearch/{VERSION})",
+        "Accept": "text/html,text/csv,application/json,application/vnd.ms-excel,*/*",
+    })
     session.mount("https://", adapter)
     session.mount("http://", adapter)
     return session

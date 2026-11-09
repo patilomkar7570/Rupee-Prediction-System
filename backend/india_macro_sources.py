@@ -18,7 +18,7 @@ import requests
 from .http_client import get as http_get
 
 HEADERS = {
-    "User-Agent": "RupeePredictionResearch/4.1.0-rc1 (local educational research app)",
+    "User-Agent": "curl/8.0 (compatible; Windows; RupeePredictionResearch/4.1.0)",
     "Accept": "text/html,text/csv,application/json,application/vnd.ms-excel,*/*",
 }
 DBIE_API = "https://data-api.dbie.rbihub.in/api/tables"
@@ -73,15 +73,23 @@ def _dbie_rows(table_id: str, start_date: str) -> pd.DataFrame:
     schema, table = table_id.split(".", 1)
     url = f"{DBIE_API}/{schema}/{table}/rows"
     errors: list[str] = []
-    # Some table deployments don't accept a date filter. Try it first, then retry without it.
+    # DBIE table API accepts limit query parameter without order=asc (which returns 400).
     for params in (
-        {"limit": 2000, "order": "asc", "labels": 1, "from": start_date},
-        {"limit": 2000, "order": "asc", "labels": 1},
+        {"limit": 2000, "labels": 1},
+        {"limit": 2000},
     ):
         try:
-            response = http_get(url, params=params, headers=HEADERS, timeout=40)
+            response = http_get(url, params=params, headers=HEADERS, timeout=15)
             response.raise_for_status()
-            rows = _json_rows(response.json())
+            payload = response.json()
+            if isinstance(payload, dict) and "columns" in payload and isinstance(payload.get("rows"), list):
+                cols = payload.get("columns", [])
+                raw_rows = payload.get("rows", [])
+                if raw_rows and isinstance(raw_rows[0], list):
+                    frame = pd.DataFrame(raw_rows, columns=cols[:len(raw_rows[0])] if len(cols) >= len(raw_rows[0]) else None)
+                    if not frame.empty:
+                        return frame
+            rows = _json_rows(payload)
             frame = pd.DataFrame(rows)
             if not frame.empty:
                 return frame
@@ -181,18 +189,42 @@ def _filter_long_rows(frame: pd.DataFrame, include: tuple[str, ...], value_col: 
 def _fetch_dbie_reserves(start_date: str) -> tuple[pd.Series, dict[str, Any]]:
     table = "external_sector.r53_foreign_exchange_reserves_weekly"
     frame = _dbie_rows(table, start_date)
+    # Check if raw spreadsheet format: rows with c1..cN or list-of-lists
+    dates = []
+    values = []
+    if "c1" in frame.columns and "c3" in frame.columns:
+        for _, r in frame.iterrows():
+            d_raw = r.get("c1")
+            v_raw = r.get("c3")  # Total reserves US$ Mn
+            if d_raw and v_raw and str(v_raw).strip():
+                d_parsed = pd.to_datetime(d_raw, errors="coerce", dayfirst=True)
+                v_num = pd.to_numeric(str(v_raw).replace(",", "").strip(), errors="coerce")
+                if pd.notna(d_parsed) and pd.notna(v_num) and v_num > 1000:
+                    dates.append(d_parsed)
+                    values.append(float(v_num) / 1000.0)
+    if len(dates) >= 20:
+        availability = pd.DatetimeIndex(dates) + pd.offsets.BDay(5)
+        out = pd.Series(values, index=availability, name="FX_RESERVES_USD_BN").dropna()
+        out.index = pd.DatetimeIndex(out.index).normalize()
+        out = out[~out.index.duplicated(keep="last")].sort_index()
+        out = out[out.index >= pd.Timestamp(start_date)]
+        if not out.empty:
+            return out, {
+                "status": "ok", "source": f"RBI DBIE mirror table {table}", "latest_date": out.index.max().strftime("%Y-%m-%d"),
+                "rows": int(out.notna().sum()), "message": "Weekly reserves converted to USD bn. Observation date is shifted by 5 business days as a conservative availability proxy.",
+                "source_url": f"https://dbie.rbihub.in/tables?table={table}", "availability_lag_business_days": 5,
+            }
     value_col = _choose_value_column(frame, ("total", "reserves", "usd"), exclude=("rupee", "crore", "gold", "foreign currency assets", "sdr", "tranche"))
     value_frame = _filter_long_rows(frame, ("total", "reserves", "usd"), value_col)
-    dates = _period_dates(value_frame)
-    values = _to_numeric(value_frame[value_col])
-    if values.empty or values.notna().sum() == 0:
+    dates_s = _period_dates(value_frame)
+    values_s = _to_numeric(value_frame[value_col])
+    if values_s.empty or values_s.notna().sum() == 0:
         raise ValueError("DBIE reserves table contains no numeric total-reserves values.")
-    # Table is described in US$ millions. If API omits unit text, the magnitude is checked as a fallback.
     norm = _normal(value_col)
-    if "million" in norm or (values.dropna().median() > 10000):
-        values = values / 1000.0
-    availability = pd.DatetimeIndex(pd.to_datetime(dates, errors="coerce")) + pd.offsets.BDay(5)
-    out = pd.Series(values.to_numpy(), index=availability, name="FX_RESERVES_USD_BN").dropna()
+    if "million" in norm or (values_s.dropna().median() > 10000):
+        values_s = values_s / 1000.0
+    availability = pd.DatetimeIndex(pd.to_datetime(dates_s, errors="coerce")) + pd.offsets.BDay(5)
+    out = pd.Series(values_s.to_numpy(), index=availability, name="FX_RESERVES_USD_BN").dropna()
     out.index = pd.DatetimeIndex(out.index).normalize()
     out = out[~out.index.duplicated(keep="last")].sort_index()
     if out.empty:
@@ -208,6 +240,41 @@ def _fetch_dbie_trade_balance(start_date: str, usdinr: pd.Series) -> tuple[pd.Se
     # This DBIE table is a monthly INR-crore export/import/trade-balance table from DGCIS.
     table = "external_sector.r648_india_s_foreign_trade_rupees"
     frame = _dbie_rows(table, start_date)
+    # Check spreadsheet format
+    if "c1" in frame.columns and ("c5" in frame.columns or "c4" in frame.columns):
+        months = {'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6, 'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12}
+        records = []
+        for _, r in frame.iterrows():
+            yr_str = str(r.get("c1") or "").strip()
+            mo_str = str(r.get("c2") or "").strip().lower()
+            tb_str = str(r.get("c5") or "").replace(",", "").strip()
+            m = re.search(r'(20\d\d)', yr_str)
+            if m and mo_str in months and tb_str:
+                v_num = pd.to_numeric(tb_str, errors="coerce")
+                if pd.notna(v_num):
+                    year = int(m.group(1))
+                    month = months[mo_str]
+                    if '-' in yr_str and month <= 3:
+                        year += 1
+                    records.append((f"{year}-{month:02d}-01", float(v_num)))
+        if records:
+            obs = pd.DataFrame(records, columns=["date", "value"])
+            period_ends = pd.DatetimeIndex(pd.to_datetime(obs["date"]) + pd.offsets.MonthEnd(0)).normalize()
+            fx = pd.to_numeric(usdinr, errors="coerce").dropna().sort_index()
+            if not fx.empty:
+                fx_values = fx.reindex(period_ends, method="ffill").to_numpy(dtype=float)
+                usd_bn = obs["value"].to_numpy(dtype=float) * 0.01 / fx_values
+                avail_idx = period_ends + pd.offsets.BDay(25)
+                out = pd.Series(usd_bn, index=avail_idx, name="INDIA_TRADE_BALANCE_USD_BN").replace([np.inf, -np.inf], np.nan).dropna()
+                out.index = pd.DatetimeIndex(out.index).normalize()
+                out = out[~out.index.duplicated(keep="last")].sort_index()
+                out = out[out.index >= pd.Timestamp(start_date)]
+                if not out.empty:
+                    return out, {
+                        "status": "ok", "source": f"RBI DBIE mirror / DGCIS table {table}", "latest_date": out.index.max().strftime("%Y-%m-%d"),
+                        "rows": int(out.notna().sum()), "message": "Monthly trade balance in INR crore converted to USD bn using period-end USD/INR.",
+                        "source_url": f"https://dbie.rbihub.in/tables?table={table}", "availability_lag_business_days": 25,
+                    }
     value_col = _choose_value_column(frame, ("trade", "balance"), exclude=("oil", "non oil", "export", "import", "usd", "us dollar"))
     selected = _filter_long_rows(frame, ("trade", "balance"), value_col)
     dates = _period_dates(selected)
@@ -223,7 +290,6 @@ def _fetch_dbie_trade_balance(start_date: str, usdinr: pd.Series) -> tuple[pd.Se
         raise ValueError("USD/INR series is required to convert India trade balance from INR crore to USD bn.")
     fx_values = fx.reindex(period_ends, method="ffill").to_numpy(dtype=float)
     usd_bn = values.to_numpy(dtype=float) * 0.01 / fx_values
-    # RBI table exposes reference periods rather than release timestamps; month-end +25 BDays is deliberately conservative.
     avail_idx = period_ends + pd.offsets.BDay(25)
     out = pd.Series(usd_bn, index=avail_idx, name="INDIA_TRADE_BALANCE_USD_BN").replace([np.inf, -np.inf], np.nan).dropna()
     out.index = pd.DatetimeIndex(out.index).normalize()
@@ -240,7 +306,7 @@ def _fetch_dbie_trade_balance(start_date: str, usdinr: pd.Series) -> tuple[pd.Se
 
 def _fetch_fred_monthly(series_id: str, output_name: str, start_date: str, lag_business_days: int) -> tuple[pd.Series, dict[str, Any]]:
     url = f"{FRED_CSV}?id={series_id}&cosd={start_date}"
-    response = _get(url, timeout=35)
+    response = _get(url, timeout=10)
     frame = pd.read_csv(StringIO(response.text))
     date_col = next((c for c in frame.columns if _normal(c) in {"observation date", "date", "time period"}), frame.columns[0])
     value_col = series_id if series_id in frame.columns else next((c for c in frame.columns if c != date_col), None)
@@ -297,7 +363,7 @@ def _fetch_oecd_cpi(start_date: str, lag_business_days: int = 20) -> tuple[pd.Se
     transform_col = next((c for c in frame.columns if "transformation" in _normal(c)), None)
     if transform_col:
         transform = frame[transform_col].astype(str).str.upper()
-        gy = frame.loc[transform.str.contains(r"(^|[^A-Z])GY([^A-Z]|$)|YEAR.?OVER.?YEAR|GROWTH", regex=True, na=False)]
+        gy = frame.loc[transform.str.contains(r"(?:^|[^A-Z])GY(?:[^A-Z]|$)|YEAR.?OVER.?YEAR|GROWTH", regex=True, na=False)]
         if not gy.empty:
             frame = gy
     measure_col = next((c for c in frame.columns if _normal(c) in {"measure", "subject"}), None)
@@ -468,11 +534,12 @@ def _record_status(series: pd.Series, source: dict[str, Any], column: str) -> di
 
 
 def fetch_india_macro_sources(start_date: str, usdinr: pd.Series) -> tuple[dict[str, pd.Series], dict[str, dict[str, Any]]]:
-    """Fetch all available India macro/capital-flow series independently.
+    """Fetch all available India macro/capital-flow series independently in parallel.
 
     A failure in one optional provider does not stop the other feeds. Each failure becomes an
     explicit source-status row so users can tell missing data from a genuine zero.
     """
+    import concurrent.futures
     out: dict[str, pd.Series] = {}
     status: dict[str, dict[str, Any]] = {}
     tasks = [
@@ -482,23 +549,34 @@ def fetch_india_macro_sources(start_date: str, usdinr: pd.Series) -> tuple[dict[
         ("INDIA_TRADE_BALANCE_USD_BN", lambda: _fetch_dbie_trade_balance(start_date, usdinr)),
         ("FPI_NET_FLOWS_USD_BN", lambda: _fetch_cdsl_fpi(start_date)),
     ]
-    for column, fetch in tasks:
+
+    def _execute(item):
+        col, fetch_fn = item
         try:
-            series, metadata = fetch()
+            series, metadata = fetch_fn()
             if series.dropna().empty:
                 raise ValueError("Source returned no usable observations.")
-            out[column] = series.rename(column).sort_index()
-            status[column] = _record_status(out[column], metadata, column)
+            return col, series.rename(col).sort_index(), _record_status(series.rename(col).sort_index(), metadata, col), None
         except Exception as exc:
-            status[column] = {
+            err_status = {
                 "status": "error", "source": {
                     "INDIA_10Y_BOND_YIELD": "FRED / OECD Main Economic Indicators",
                     "INDIA_CPI_YOY": "OECD SDMX public API",
                     "FX_RESERVES_USD_BN": "RBI DBIE mirror public read-only API",
                     "INDIA_TRADE_BALANCE_USD_BN": "RBI DBIE mirror / DGCIS public trade table",
                     "FPI_NET_FLOWS_USD_BN": "CDSL public FPI daily report",
-                }[column],
-                "target_column": column, "message": str(exc)[:400],
+                }.get(col, "India public data connector"),
+                "target_column": col, "message": str(exc)[:400],
                 "rows": 0, "latest_date": None,
             }
+            return col, None, err_status, exc
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool:
+        results = pool.map(_execute, tasks)
+
+    for col, series, stat, _ in results:
+        if series is not None:
+            out[col] = series
+        status[col] = stat
+
     return out, status

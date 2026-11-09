@@ -10,14 +10,26 @@ Rupee Prediction System brings together currency and macroeconomic monitoring, m
 
 ### Features
 
-- Directional and numerical forecasts for 1-, 5-, and 20-session horizons.
-- Data refresh and source-status monitoring.
-- Walk-forward evaluation with benchmark comparisons and uncertainty intervals.
-- Feature ablation and factor-sign diagnostics.
-- Point-in-time and data-quality checks, including stale or incomplete target history.
-- Optional user-supplied USD/INR reference-rate CSVs and a configurable target definition.
-- Local dashboard, health/status endpoints, structured logs, and append-only shadow forecasts.
-- **One Windows entry point:** `run.bat` starts the app, prepares dependencies when needed, and provides optional update and validation commands.
+- **Directional & Numerical Forecasts**: Multi-horizon predictions for 1-session (tomorrow), 5-session (next week), and 20-session (next month) horizons.
+- **Executive Mode & Segmented Views**: Switch seamlessly between **🌟 Executive Forecast**, **📊 Macroeconomic Groups**, and **🔬 Deep Quant Analytics & Audit**.
+- **Macroeconomic Driver Attribution & Pressure Gauge**: Visual headwind/tailwind analysis tracking Brent Crude Oil, US Dollar Index (DXY), RBI Repo Rate, FX Reserves buffer, and Foreign Portfolio Investment (FPI) flows.
+- **Interactive Multi-Timeframe Charting**: Fast SVG trend analysis with client-side timeframe switching across `1M`, `3M`, `6M`, `1Y`, and `5Y`.
+- **Executive PDF / Print Export**: One-click printable briefing export formatted via dedicated print stylesheets (`@media print`).
+- **Unified Master Action**: Single `⚡ Run Analysis & Refresh` trigger consolidating data ingestion, feature extraction, and multi-model inference.
+- **RBI Technical Intervention Signals**: 14-day RSI, 20-day Bollinger %b, and 5/20 EMA ratios to capture short-term mean-reversion and central-bank defense bands.
+- **Parallel Multi-Horizon Engine**: Multi-threaded execution computing 1D, 5D, and 20D horizons concurrently.
+- **Data Quality & Point-in-Time Guardrails**: Raw file duplicates, invalid rates, freshness audit, and fail-closed validation.
+- **Evaluation & Uncertainty Diagnostics**: Chronological walk-forward backtesting, moving-block bootstrap confidence intervals, and append-only shadow-forecast ledger.
+- **One Windows Entry Point**: `run.bat` automatically configures the environment and manages all dashboard, test, and validation modes.
+
+## Macroeconomic Factor Architecture
+
+The platform aggregates high-signal market indicators categorized into 4 core functional domains:
+
+1. **Global FX & Dollar Strength**: US Dollar Index (DXY), Offshore Yuan (USD/CNH), CBOE Volatility Index (VIX), and Treasury Volatility (MOVE).
+2. **Commodities & Energy Imports**: Brent Crude Oil (USD & INR proxy) and Gold Bullion (USD & INR proxy), reflecting India's key import bill pressures.
+3. **Rates & Yield Spreads**: RBI Policy Repo Rate, India 10-Year Benchmark Yield, US 10-Year & 2-Year Treasury Yields, US Effective Fed Funds Rate, and ECB Policy Facility Rate.
+4. **Capital Flows & External Sector**: RBI Foreign Exchange Reserves (USD Bn), Foreign Portfolio Investment (FPI) Net Equity/Debt Flows, Merchandise Trade Balance, and India CPI Inflation.
 
 ## Release candidate: v4.1.0-rc1 (not yet published)
 

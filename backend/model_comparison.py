@@ -19,20 +19,20 @@ def model_factories() -> dict[str, Any]:
         "Market-price Logistic": lambda: Pipeline([
             ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
             ("scale", StandardScaler()),
-            ("model", LogisticRegression(max_iter=600, C=0.35, class_weight="balanced", random_state=42)),
+            ("model", LogisticRegression(max_iter=1000, C=0.25, class_weight="balanced", random_state=42)),
         ]),
         "Macro Logistic": lambda: Pipeline([
             ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
             ("scale", StandardScaler()),
-            ("model", LogisticRegression(max_iter=600, C=0.25, class_weight="balanced", random_state=42)),
+            ("model", LogisticRegression(max_iter=1000, C=0.20, class_weight="balanced", random_state=42)),
         ]),
         "Macro Random Forest": lambda: Pipeline([
             ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
-            ("model", RandomForestClassifier(n_estimators=80, max_depth=6, min_samples_leaf=10, max_features="sqrt", class_weight="balanced_subsample", random_state=42, n_jobs=1)),
+            ("model", RandomForestClassifier(n_estimators=70, max_depth=5, min_samples_leaf=8, max_features="sqrt", class_weight="balanced_subsample", random_state=42, n_jobs=1)),
         ]),
         "Macro Gradient Boosting": lambda: Pipeline([
             ("imputer", SimpleImputer(strategy="median", keep_empty_features=True)),
-            ("model", GradientBoostingClassifier(n_estimators=25, learning_rate=0.04, max_depth=1, min_samples_leaf=12, subsample=0.8, random_state=42)),
+            ("model", GradientBoostingClassifier(n_estimators=50, learning_rate=0.06, max_depth=3, min_samples_leaf=8, subsample=0.85, random_state=42)),
         ]),
     }
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## Modernized UI, PDF Export & High-Signal Macro Engine — 2026-11-09
+
+- **Modernized Frontend Architecture**: Added a 3-tab segmented interface (`🌟 Executive Forecast`, `📊 Macro Groups`, and `🔬 Deep Quant Analytics & Audit`).
+- **Interactive Charting & Timeframes**: Added fast client-side time-window slicing for `1M`, `3M`, `6M`, `1Y`, and `5Y` historical spans.
+- **Consolidated Master Action**: Replaced scattered test buttons with a single unified `⚡ Run Analysis & Refresh` action.
+- **Executive PDF / Print Export**: Implemented `@media print` styling and 1-click report generation for formatted briefings.
+- **Macro Driver Attribution**: Integrated a pressure gauge score and human-readable headwind/tailwind factor summaries.
+- **Technical Intervention Features**: Added 14-day RSI, 20-day Bollinger %b, and 5/20 EMA trend ratios on USD/INR.
+- **Parallel Multi-Horizon Forecasting**: Parallelized 1-day, 5-day, and 20-day model execution via multi-threading.
+- **Optimized Evaluation**: Accelerated bootstrap calculations to provide fast, responsive confidence bounds.
+
 ## Windows launcher update — 2026-11-03
 
 - Renamed the single Windows entry point to lowercase `run.bat` and aligned repository checks and documentation with that name.

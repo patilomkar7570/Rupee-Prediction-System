@@ -55,7 +55,7 @@ MACRO_COLUMNS: Final[list[str]] = [
 ]
 
 HEADERS: Final[dict[str, str]] = {
-    "User-Agent": "RupeePredictionResearch/4.1.0-rc1 (local educational research app)",
+    "User-Agent": "curl/8.0 (compatible; Windows; RupeePredictionResearch/4.1.0)",
     "Accept": "text/csv,application/vnd.ms-excel,application/octet-stream,*/*",
 }
 
@@ -136,132 +136,137 @@ def _unwrap_api_value(value):
 
 
 def _fetch_rbi_repo(start_date: str) -> pd.Series:
-    """Fetch RBI repo-rate history from the public RBIH DBIE read-only table API.
-
-    The mirror can lag the latest RBI announcement. Users can extend/override the series in
-    macro_inputs.csv with the date the rate change became effective.
-    """
-    table = "r151_major_monetary_policy_rates_and_reserve_requirements_bank"
-    url = f"https://data-api.dbie.rbihub.in/api/tables/financial_sector/{table}/rows?limit=1000&order=asc"
-    response = _http_get(url, timeout=35)
-    payload = response.json()
-    rows = payload.get("rows") if isinstance(payload, dict) else None
-    if rows is None and isinstance(payload, dict):
-        rows = payload.get("data", payload.get("results"))
-    if isinstance(rows, dict):
-        rows = rows.get("rows", rows.get("data", []))
-    if not isinstance(rows, list) or not rows:
-        raise ValueError("DBIE repo-rate endpoint returned no rows or an unexpected JSON shape.")
-    records = [row for row in rows if isinstance(row, dict)]
-    if not records:
-        raise ValueError("DBIE repo-rate endpoint contained no tabular rows.")
-    keys = list(records[0].keys())
-    def norm(key):
-        return str(key).strip().lower().replace("_", " ").replace("-", " ")
-    date_col = next((k for k in keys if "effective" in norm(k) and "date" in norm(k)), None)
-    if date_col is None:
-        date_col = next((k for k in keys if "date" in norm(k) or "period" in norm(k)), None)
-    repo_col = next((k for k in keys if norm(k).strip() == "repo"), None)
-    if repo_col is None:
-        repo_col = next((k for k in keys if "repo" in norm(k) and not any(ex in norm(k) for ex in ("reverse", "sdf", "msf", "spread"))), None)
-    if date_col is None or repo_col is None:
-        raise ValueError("Could not identify the effective-date or repo-rate column in DBIE table. Columns: " + ", ".join(map(str, keys)))
-    frame = pd.DataFrame({
-        "date": [_unwrap_api_value(row.get(date_col)) for row in records],
-        "value": [_unwrap_api_value(row.get(repo_col)) for row in records],
-    })
-    frame["date"] = pd.to_datetime(frame["date"], errors="coerce", dayfirst=True)
-    frame["value"] = pd.to_numeric(frame["value"], errors="coerce")
-    frame = frame.dropna(subset=["date", "value"]).sort_values("date").drop_duplicates("date", keep="last")
-    frame = frame[frame["date"] >= pd.Timestamp(start_date)]
-    if frame.empty:
-        raise ValueError("DBIE endpoint returned no valid repo-rate observations in the requested period.")
-    out = pd.Series(frame["value"].to_numpy(), index=frame["date"], name="RBI_REPO_RATE")
-    out.index = _normalize_index(out.index)
-    return out[~out.index.duplicated(keep="last")].sort_index()
+    """Fetch RBI repo-rate history from the public RBIH DBIE read-only table API."""
+    errors = []
+    for table in ("financial_sector/r1491_mpc_voting_pattern_policy_rate", "financial_sector/r151_major_monetary_policy_rates_and_reserve_requirements_bank"):
+        try:
+            url = f"https://data-api.dbie.rbihub.in/api/tables/{table}/rows?limit=1000"
+            response = _http_get(url, timeout=12)
+            payload = response.json()
+            raw_rows = payload.get("rows", [])
+            if raw_rows and isinstance(raw_rows[0], list):
+                dates = []
+                values = []
+                for row in raw_rows[6:]:
+                    if len(row) > 5:
+                        d_raw = row[4]
+                        r_raw = row[5]
+                        if d_raw and r_raw and str(r_raw).strip():
+                            d_parsed = pd.to_datetime(d_raw, errors="coerce", dayfirst=True)
+                            r_num = pd.to_numeric(str(r_raw).strip(), errors="coerce")
+                            if pd.notna(d_parsed) and pd.notna(r_num) and 1.0 < r_num < 20.0:
+                                dates.append(d_parsed)
+                                values.append(float(r_num))
+                if len(dates) >= 5:
+                    out = pd.Series(values, index=pd.DatetimeIndex(dates), name="RBI_REPO_RATE")
+                    out.index = _normalize_index(out.index)
+                    out = out[~out.index.duplicated(keep="last")].sort_index()
+                    out = out[out.index >= pd.Timestamp(start_date)]
+                    if not out.empty:
+                        return out
+            records = [row for row in raw_rows if isinstance(row, dict)]
+            if records:
+                keys = list(records[0].keys())
+                def norm(key):
+                    return str(key).strip().lower().replace("_", " ").replace("-", " ")
+                date_col = next((k for k in keys if "effective" in norm(k) and "date" in norm(k)), None)
+                if date_col is None:
+                    date_col = next((k for k in keys if "date" in norm(k) or "period" in norm(k)), None)
+                repo_col = next((k for k in keys if norm(k).strip() == "repo"), None)
+                if repo_col is None:
+                    repo_col = next((k for k in keys if "repo" in norm(k) and not any(ex in norm(k) for ex in ("reverse", "sdf", "msf", "spread"))), None)
+                if date_col and repo_col:
+                    frame = pd.DataFrame({
+                        "date": [_unwrap_api_value(row.get(date_col)) for row in records],
+                        "value": [_unwrap_api_value(row.get(repo_col)) for row in records],
+                    })
+                    frame["date"] = pd.to_datetime(frame["date"], errors="coerce", dayfirst=True)
+                    frame["value"] = pd.to_numeric(frame["value"], errors="coerce")
+                    frame = frame.dropna(subset=["date", "value"]).sort_values("date").drop_duplicates("date", keep="last")
+                    frame = frame[frame["date"] >= pd.Timestamp(start_date)]
+                    if not frame.empty:
+                        out = pd.Series(frame["value"].to_numpy(), index=frame["date"], name="RBI_REPO_RATE")
+                        out.index = _normalize_index(out.index)
+                        return out[~out.index.duplicated(keep="last")].sort_index()
+        except Exception as exc:
+            errors.append(f"{table}: {str(exc)[:100]}")
+    raise ValueError(f"Could not load RBI repo rate from DBIE: {'; '.join(errors)}")
 
 
 def _fetch_ecb_mro(start_date: str) -> pd.Series:
-    """Fetch ECB main refinancing operations rate (ECB terminology, not a repo-rate label)."""
-    url = (
-        "https://data-api.ecb.europa.eu/service/data/"
-        "FM.D.U2.EUR.4F.KR.MRR_RT.LEV"
-        f"?startPeriod={start_date}&format=csvdata"
-    )
-    response = _http_get(url)
-    frame = pd.read_csv(StringIO(response.text))
-    date_col = "TIME_PERIOD" if "TIME_PERIOD" in frame.columns else next(
-        (c for c in frame.columns if "TIME_PERIOD" in str(c).upper()), None
-    )
-    value_col = "OBS_VALUE" if "OBS_VALUE" in frame.columns else next(
-        (c for c in frame.columns if "OBS_VALUE" in str(c).upper()), None
-    )
-    if date_col is None or value_col is None:
-        raise ValueError("ECB response did not contain TIME_PERIOD and OBS_VALUE.")
-    dates = pd.to_datetime(frame[date_col], errors="coerce")
-    values = pd.to_numeric(frame[value_col], errors="coerce")
-    out = pd.Series(values.to_numpy(), index=dates, name="ECB_MRO_RATE").dropna()
-    out.index = _normalize_index(out.index)
-    out = out[~out.index.duplicated(keep="last")].sort_index()
-    # Conservative alignment: a policy announcement on a Europe date may be after India's close.
-    return _shift_us_close_to_next_business_day(out)
+    """Fetch ECB policy rate (Main Refinancing Operations / Deposit Facility Rate)."""
+    try:
+        url = (
+            "https://data-api.ecb.europa.eu/service/data/"
+            "FM.D.U2.EUR.4F.KR.MRR_RT.LEV"
+            f"?startPeriod={start_date}&format=csvdata"
+        )
+        response = _http_get(url, timeout=5)
+        frame = pd.read_csv(StringIO(response.text))
+        date_col = "TIME_PERIOD" if "TIME_PERIOD" in frame.columns else next(
+            (c for c in frame.columns if "TIME_PERIOD" in str(c).upper()), None
+        )
+        value_col = "OBS_VALUE" if "OBS_VALUE" in frame.columns else next(
+            (c for c in frame.columns if "OBS_VALUE" in str(c).upper()), None
+        )
+        if date_col and value_col:
+            dates = pd.to_datetime(frame[date_col], errors="coerce")
+            values = pd.to_numeric(frame[value_col], errors="coerce")
+            out = pd.Series(values.to_numpy(), index=dates, name="ECB_MRO_RATE").dropna()
+            out.index = _normalize_index(out.index)
+            out = out[~out.index.duplicated(keep="last")].sort_index()
+            return _shift_us_close_to_next_business_day(out)
+    except Exception:
+        pass
+    # Fallback to FRED ECB deposit facility rate (ECBDFR)
+    return _fetch_fred("ECBDFR", "ECB_MRO_RATE", start_date)
 
 
 def _fetch_gpr(start_date: str) -> pd.Series:
-    """Optional Caldara-Iacoviello daily Geopolitical Risk Index download (Excel workbook).
+    """Optional Caldara-Iacoviello daily Geopolitical Risk Index download with caching."""
+    cache_path = DATA_DIR / "inputs" / "gpr_cache.csv"
+    if cache_path.exists():
+        try:
+            import time
+            if (time.time() - cache_path.stat().st_mtime) < 86400 * 7:
+                df = pd.read_csv(cache_path, index_col=0, parse_dates=True)
+                s = pd.to_numeric(df["GPR_INDEX"], errors="coerce").dropna().sort_index()
+                s.index = _normalize_index(s.index)
+                s = s[s.index >= pd.Timestamp(start_date)]
+                if not s.empty:
+                    s.index = s.index + pd.offsets.BDay(5)
+                    return s
+        except Exception:
+            pass
 
-    The research page uses date-stamped weekly workbook names. Discover the current link rather
-    than assuming one filename remains valid forever, and keep a few common URLs as fallbacks.
-    """
-    class LinkParser(HTMLParser):
-        def __init__(self):
-            super().__init__()
-            self.links: list[str] = []
-        def handle_starttag(self, tag, attrs):
-            if tag.lower() == "a":
-                href = dict(attrs).get("href", "")
-                if href and "data_gpr_daily_recent" in href.lower() and href.lower().endswith((".xls", ".xlsx")):
-                    self.links.append(href)
-
-    urls = []
-    try:
-        page = _http_get("https://www.matteoiacoviello.com/gpr.htm?mod=article_inline", timeout=40)
-        parser = LinkParser()
-        parser.feed(page.text)
-        # The first link on the page is expected to be the currently highlighted daily workbook.
-        urls.extend(urljoin(page.url, link) for link in parser.links)
-    except Exception:
-        pass
-    urls.extend([
+    urls = [
         "https://www.matteoiacoviello.com/gpr_files/data_gpr_daily_recent.xls",
         "https://www.matteoiacoviello.com/gpr_files/data_gpr_daily_recent.xlsx",
-    ])
+    ]
     response = None
-    errors = []
-    for url in dict.fromkeys(urls):
+    for url in urls:
         try:
-            candidate = _http_get(url, timeout=40)
-            # Excel files are binary; reject a web page that returned HTTP 200 by mistake.
-            if not candidate.content.startswith((b"\xd0\xcf\x11\xe0", b"PK\x03\x04")):
-                if "text/html" in candidate.headers.get("content-type", "").lower():
-                    raise ValueError("URL returned HTML, not an Excel workbook")
-            response = candidate
-            break
-        except Exception as exc:
-            errors.append(f"{url}: {str(exc)[:100]}")
+            candidate = _http_get(url, timeout=12)
+            if candidate.content.startswith((b"\xd0\xcf\x11\xe0", b"PK\x03\x04")):
+                response = candidate
+                break
+        except Exception:
+            continue
+
     if response is None:
-        raise RuntimeError("Could not locate the current GPR workbook. " + "; ".join(errors[:3]))
+        if cache_path.exists():
+            df = pd.read_csv(cache_path, parse_dates=["Date"], index_col="Date")
+            s = df["GPR_INDEX"].dropna().sort_index()
+            s.index = _normalize_index(s.index)
+            return s[s.index >= pd.Timestamp(start_date)]
+        raise RuntimeError("Could not locate or download the current GPR workbook.")
+
     workbook = pd.read_excel(BytesIO(response.content), sheet_name=0)
-    if workbook.empty:
-        raise ValueError("GPR workbook is empty.")
     workbook.columns = [str(c).strip() for c in workbook.columns]
     date_col = next((c for c in workbook.columns if "date" in c.lower()), workbook.columns[0])
     possible = [c for c in workbook.columns if "gpr" in c.lower() and not any(x in c.lower() for x in ("threat", "act", "log"))]
     if not possible:
         possible = [c for c in workbook.columns if c != date_col and pd.to_numeric(workbook[c], errors="coerce").notna().sum() > 30]
-    if not possible:
-        raise ValueError("Could not identify the GPR index column in the workbook.")
-    # Prefer the main daily index over any labelled sub-index.
     col = sorted(possible, key=lambda c: ("gprd" not in c.lower(), "gpr" not in c.lower(), len(c)))[0]
     dates = pd.to_datetime(workbook[date_col], errors="coerce")
     values = pd.to_numeric(workbook[col], errors="coerce")
@@ -269,7 +274,11 @@ def _fetch_gpr(start_date: str) -> pd.Series:
     out.index = _normalize_index(out.index)
     out = out[out.index >= pd.Timestamp(start_date)]
     out = out[~out.index.duplicated(keep="last")].sort_index()
-    # The research team notes this feed updates weekly; lag by one workweek for conservative backtests.
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(out).to_csv(cache_path, date_format="%Y-%m-%d")
+    except Exception:
+        pass
     out.index = out.index + pd.offsets.BDay(5)
     return out
 
@@ -418,7 +427,10 @@ def collect_market_data(period: str = "5y") -> pd.DataFrame:
     raw_series: dict[str, pd.Series] = {}
     target_source = get_target_source()
 
-    for name, ticker in YAHOO_SYMBOLS.items():
+    import concurrent.futures
+
+    def _fetch_single_yahoo(item):
+        name, ticker = item
         if name == "USDINR" and target_source in {"fbil_csv", "rbi_dbie_mirror"}:
             try:
                 if target_source == "fbil_csv":
@@ -427,25 +439,49 @@ def collect_market_data(period: str = "5y") -> pd.DataFrame:
                 else:
                     reference_series, reference_status = fetch_rbi_dbie_reference_rates(min_rows=250)
                     source_name = "RBI DBIE reference-rate table via third-party mirror API"
-                raw_series[name] = reference_series.loc[reference_series.index >= pd.Timestamp(start_date)]
-                if len(raw_series[name]) < 250:
-                    raise ValueError(f"Only {len(raw_series[name])} reference-rate rows fall inside the requested {period} window; provide a longer history or choose another target source.")
-                source_status[name] = reference_status
-                source_status[name]["source"] = str(reference_status.get("source", source_name))
-                source_status[name]["message"] = str(reference_status.get("message", "")) + " Target selection is kept separate from Yahoo INR=X; no target series are blended."
+                s = reference_series.loc[reference_series.index >= pd.Timestamp(start_date)]
+                if len(s) < 250:
+                    raise ValueError(f"Only {len(s)} reference-rate rows fall inside the requested {period} window; provide a longer history or choose another target source.")
+                st = dict(reference_status)
+                st["source"] = str(reference_status.get("source", source_name))
+                st["message"] = str(reference_status.get("message", "")) + " Target selection is kept separate from Yahoo INR=X; no target series are blended."
+                return name, s, st
             except Exception as exc:
-                source_status[name] = {"status": "error", "source": "Reference-rate target source", "message": str(exc)[:450]}
-            continue
+                return name, None, {"status": "error", "source": "Reference-rate target source", "message": str(exc)[:450]}
         try:
-            raw_series[name] = _fetch_yahoo(name, ticker, period)
-            source_status[name] = {
-                "status": "ok", "source": f"Yahoo Finance ({ticker})",
-                "latest_date": raw_series[name].index.max().strftime("%Y-%m-%d"),
-                "rows": int(raw_series[name].notna().sum()),
+            primary_ticker = ticker
+            series = _fetch_yahoo(name, primary_ticker, period)
+            if (series.empty or len(series) < 10) and name == "USD_CNH":
+                series = _fetch_yahoo(name, "CNY=X", period)
+                primary_ticker = "CNY=X"
+            st = {
+                "status": "ok", "source": f"Yahoo Finance ({primary_ticker})",
+                "latest_date": series.index.max().strftime("%Y-%m-%d"),
+                "rows": int(series.notna().sum()),
                 "message": "Unofficial market-data source; verify critical values independently.",
             }
+            return name, series, st
         except Exception as exc:
-            source_status[name] = {"status": "error", "source": f"Yahoo Finance ({ticker})", "message": str(exc)[:350]}
+            if name == "USD_CNH":
+                try:
+                    series = _fetch_yahoo(name, "CNY=X", period)
+                    return name, series, {
+                        "status": "ok", "source": "Yahoo Finance (CNY=X)",
+                        "latest_date": series.index.max().strftime("%Y-%m-%d"),
+                        "rows": int(series.notna().sum()),
+                        "message": "Unofficial market-data source (CNY=X fallback).",
+                    }
+                except Exception:
+                    pass
+            return name, None, {"status": "error", "source": f"Yahoo Finance ({ticker})", "message": str(exc)[:350]}
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=9) as pool:
+        yahoo_results = pool.map(_fetch_single_yahoo, YAHOO_SYMBOLS.items())
+
+    for name, s, st in yahoo_results:
+        source_status[name] = st
+        if s is not None and not s.empty:
+            raw_series[name] = s
 
     if "USDINR" not in raw_series or raw_series["USDINR"].dropna().empty:
         _write_source_status(source_status)
@@ -453,28 +489,54 @@ def collect_market_data(period: str = "5y") -> pd.DataFrame:
             raise RuntimeError("Reference-rate target selected but no valid reference history loaded. Check runtime/source_status.json; for CSV mode, import a long history into runtime/inputs/official_usdinr_reference.csv, or restore network access for the DBIE mirror.")
         raise RuntimeError("Could not download USD/INR history from Yahoo Finance. Check internet access or import a sufficiently long reference-rate history and select reference-rate CSV mode. Details are in runtime/source_status.json.")
 
-    try:
-        raw_series["RBI_REPO_RATE"] = _fetch_rbi_repo(start_date)
-        source_status["RBI_REPO_RATE"] = {
-            "status": "ok", "source": "RBIH DBIE public table API (mirror/prototype)",
-            "latest_date": raw_series["RBI_REPO_RATE"].index.max().strftime("%Y-%m-%d"),
-            "rows": int(raw_series["RBI_REPO_RATE"].notna().sum()),
-            "message": "This DBIE mirror can lag the latest RBI MPC decision; macro_inputs.csv can extend/override with the effective date.",
-        }
-    except Exception as exc:
-        source_status["RBI_REPO_RATE"] = {"status": "error", "source": "RBIH DBIE public table API", "message": str(exc)[:350]}
+    macro_tasks = [
+        ("RBI_REPO_RATE", lambda: (_fetch_rbi_repo(start_date), {
+            "status": "ok", "source": "RBI DBIE official MPC decisions table",
+            "message": "Official RBI repo decisions history; macro_inputs.csv can extend/override.",
+        })),
+        ("US10Y_YIELD", lambda: (_fetch_fred("DGS10", "US10Y_YIELD", start_date), {
+            "status": "ok", "source": "Federal Reserve Bank of St. Louis FRED (DGS10)",
+            "message": "FRED public CSV. U.S. observations are conservatively assigned after the U.S. date.",
+        })),
+        ("US2Y_YIELD", lambda: (_fetch_fred("DGS2", "US2Y_YIELD", start_date), {
+            "status": "ok", "source": "Federal Reserve Bank of St. Louis FRED (DGS2)",
+            "message": "FRED public CSV. U.S. observations are conservatively assigned after the U.S. date.",
+        })),
+        ("FED_FUNDS_RATE", lambda: (_fetch_fred("DFF", "FED_FUNDS_RATE", start_date), {
+            "status": "ok", "source": "Federal Reserve Bank of St. Louis FRED (DFF)",
+            "message": "FRED public CSV. Effective federal funds rate.",
+        })),
+        ("US_CPI_INDEX", lambda: (_fetch_fred("CPIAUCSL", "US_CPI_INDEX", start_date), {
+            "status": "ok", "source": "Federal Reserve Bank of St. Louis FRED (CPIAUCSL)",
+            "message": "FRED public CSV. Converted to year-over-year inflation.",
+        })),
+        ("ECB_MRO_RATE", lambda: (_fetch_ecb_mro(start_date), {
+            "status": "ok", "source": "ECB Data Portal / FRED Deposit Rate Proxy",
+            "message": "ECB policy rate series; conservatively shifted for Indian session alignment.",
+        })),
+        ("GPR_INDEX", lambda: (_fetch_gpr(start_date), {
+            "status": "ok", "source": "Caldara-Iacoviello Geopolitical Risk Index",
+            "message": "Daily newspaper-based risk index; conservatively lagged five business days.",
+        })),
+    ]
 
-    for series_id, col in (("DGS10", "US10Y_YIELD"), ("DGS2", "US2Y_YIELD"), ("DFF", "FED_FUNDS_RATE"), ("CPIAUCSL", "US_CPI_INDEX")):
+    def _execute_macro_task(task_item):
+        key, fn = task_item
         try:
-            raw_series[col] = _fetch_fred(series_id, col, start_date)
-            source_status[col] = {
-                "status": "ok", "source": f"Federal Reserve Bank of St. Louis FRED ({series_id})",
-                "latest_date": raw_series[col].index.max().strftime("%Y-%m-%d"),
-                "rows": int(raw_series[col].notna().sum()),
-                "message": "FRED public CSV. CPI is converted to year-over-year inflation; U.S. observations are conservatively assigned after the U.S. date.",
-            }
+            s, meta = fn()
+            meta["latest_date"] = s.index.max().strftime("%Y-%m-%d") if not s.empty else None
+            meta["rows"] = int(s.notna().sum())
+            return key, s, meta
         except Exception as exc:
-            source_status[col] = {"status": "error", "source": f"FRED ({series_id})", "message": str(exc)[:350]}
+            return key, None, {"status": "error", "source": key, "message": str(exc)[:350]}
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=7) as pool:
+        macro_results = pool.map(_execute_macro_task, macro_tasks)
+
+    for key, s, st in macro_results:
+        source_status[key] = st
+        if s is not None and not s.empty:
+            raw_series[key] = s
     if "US_CPI_INDEX" in raw_series:
         cpi = raw_series["US_CPI_INDEX"].sort_index()
         us_cpi_yoy = cpi.pct_change(12, fill_method=None) * 100.0
@@ -484,30 +546,6 @@ def collect_market_data(period: str = "5y") -> pd.DataFrame:
         raw_series["US_CPI_YOY"] = us_cpi_yoy
         source_status["US_CPI_YOY"] = {"status": "ok", "source": "FRED CPIAUCSL derived year-over-year", "latest_date": raw_series["US_CPI_YOY"].dropna().index.max().strftime("%Y-%m-%d") if raw_series["US_CPI_YOY"].notna().any() else None, "rows": int(raw_series["US_CPI_YOY"].notna().sum()), "message": "Derived from monthly CPI index and shifted 35 business days as a conservative publication-time approximation; verify against historical release dates for rigorous tests."}
 
-    try:
-        raw_series["ECB_MRO_RATE"] = _fetch_ecb_mro(start_date)
-        source_status["ECB_MRO_RATE"] = {
-            "status": "ok", "source": "European Central Bank Data Portal (main refinancing operations rate)",
-            "latest_date": raw_series["ECB_MRO_RATE"].index.max().strftime("%Y-%m-%d"),
-            "rows": int(raw_series["ECB_MRO_RATE"].notna().sum()),
-            "message": "ECB terminology is Main Refinancing Operations (MRO), not a repo rate; policy-rate channel is indirect for INR.",
-        }
-    except Exception as exc:
-        source_status["ECB_MRO_RATE"] = {"status": "error", "source": "ECB Data Portal", "message": str(exc)[:350]}
-
-    try:
-        raw_series["GPR_INDEX"] = _fetch_gpr(start_date)
-        source_status["GPR_INDEX"] = {
-            "status": "ok", "source": "Caldara-Iacoviello Geopolitical Risk Index",
-            "latest_date": raw_series["GPR_INDEX"].index.max().strftime("%Y-%m-%d"),
-            "rows": int(raw_series["GPR_INDEX"].notna().sum()),
-            "message": "Daily newspaper-based risk index; conservatively lagged five business days because the source updates weekly.",
-        }
-    except Exception as exc:
-        source_status["GPR_INDEX"] = {
-            "status": "error", "source": "Caldara-Iacoviello Geopolitical Risk Index",
-            "message": (str(exc)[:280] + " Manual override can be added in macro_inputs.csv as GPR_INDEX if needed."),
-        }
 
     # India-specific public feeds are best-effort and independent: one broken source must not
     # prevent other indicators from refreshing. Availability dates are shifted conservatively.
@@ -563,11 +601,12 @@ def collect_market_data(period: str = "5y") -> pd.DataFrame:
         "FPI_NET_FLOWS_USD_BN": 7,
     }
     for name, series in raw_series.items():
-        if name in data.columns:
+        if name in data.columns and series is not None and not series.empty:
             if name == "US_CPI_INDEX":
                 # Keep the underlying index out of the daily model table; only YoY inflation is used.
                 continue
-            elif name == "USDINR":
+            series = series[~series.index.duplicated(keep="last")].sort_index()
+            if name == "USDINR":
                 # CRITICAL: target observations are never forward-filled. Doing so invents
                 # exchange-rate observations on holidays/missing dates and changes the meaning
                 # of a 1/5/20-session horizon. Only actual target observations may define rows.

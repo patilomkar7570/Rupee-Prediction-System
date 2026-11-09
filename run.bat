@@ -46,7 +46,9 @@ if not errorlevel 1 (
 
 echo Starting the local dashboard...
 echo The backend will run in a separate window. Keep that window open while using the app.
-start "Rupee Prediction System Backend" /D "%CD%" "%ComSpec%" /k ""%PYTHON_EXE%" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000"
+echo Pre-compiling Python bytecode...
+"%PYTHON_EXE%" -m compileall -q backend
+start "Rupee Prediction System Backend" /D "%CD%" "%ComSpec%" /k "call "%PYTHON_EXE%" -m uvicorn backend.main:app --host 127.0.0.1 --port 8000"
 
 echo Waiting for the backend to become ready...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$deadline=(Get-Date).AddSeconds(45); do { try { $r=Invoke-RestMethod -Uri '%APP_URL%/api/health' -TimeoutSec 2; if ($r.application -eq 'Rupee Prediction System' -and $r.version -eq '%APP_VERSION%') { exit 0 } } catch {}; Start-Sleep -Milliseconds 500 } while ((Get-Date) -lt $deadline); exit 1"
@@ -148,8 +150,7 @@ if /I "%INSTALLED_HASH%"=="%REQUIREMENTS_HASH%" if /I "%INSTALLED_PYTHON%"=="%PY
 )
 
 echo Installing or updating dependencies into the selected Python installation...
-"%PYTHON_EXE%" -m pip install --disable-pip-version-check --upgrade pip
-if errorlevel 1 exit /b 1
+"%PYTHON_EXE%" -m pip install --disable-pip-version-check --quiet --upgrade pip 2>nul
 "%PYTHON_EXE%" -m pip install --disable-pip-version-check -r requirements.txt
 if errorlevel 1 exit /b 1
 (
