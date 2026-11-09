@@ -261,11 +261,15 @@ function renderForecasts(report) {
   renderJson("prediction-detail", details);
 
   // 2. Render Simple Forecast Cards for Regular Users
+  const currentClose = Number(report.usd_inr_close) || 0;
+
   horizons.forEach(function (h) {
     const d = h.horizon_days;
     const badgeEl = $("simple-badge-" + d + "d");
     const targetEl = $("simple-target-" + d + "d");
+    const deltaEl = $("simple-delta-" + d + "d");
     const rangeEl = $("simple-range-" + d + "d");
+    const skewEl = $("simple-skew-" + d + "d");
     const confEl = $("simple-conf-" + d + "d");
     const fillEl = $("simple-fill-" + d + "d");
     if (!badgeEl) return;
@@ -274,37 +278,76 @@ function renderForecasts(report) {
     const intervals = num.forecast_intervals || {};
     const int80 = intervals["80pct"] || {};
 
-    let badgeText = "⏹️ Stable Range";
+    const targetRate = Number(num.forecast_rate != null ? num.forecast_rate : currentClose);
+    const diff = currentClose > 0 ? (targetRate - currentClose) : 0;
+    const diffPct = currentClose > 0 ? (diff / currentClose) * 100 : 0;
+
+    // Harmonized stance calculation:
+    // When projected change is minimal (< 0.08%), it is economically rangebound/steady
+    let badgeText = "⏹️ Steady / Rangebound";
     let badgeClass = "neutral";
-    if (h.model_prediction === "UP" || h.prediction === "UP") {
+    let deltaClass = "neutral";
+
+    if (diffPct >= 0.08) {
       badgeText = "🔼 Rupee Pressure (USD/INR Up)";
       badgeClass = "up";
-    } else if (h.model_prediction === "DOWN" || h.prediction === "DOWN") {
+      deltaClass = "positive";
+    } else if (diffPct <= -0.08) {
       badgeText = "🔽 Rupee Support (USD/INR Down)";
       badgeClass = "down";
+      deltaClass = "negative";
     } else {
-      badgeText = "⏹️ Stable / Rangebound";
-      badgeClass = "neutral";
+      const downProb = h.model_probabilities ? Number(h.model_probabilities.DOWN || 0) : 0;
+      const upProb = h.model_probabilities ? Number(h.model_probabilities.UP || 0) : 0;
+      if (downProb > 0.42 && downProb > upProb + 0.05) {
+        badgeText = "⏹️ Steady Range (Down Tilt)";
+        badgeClass = "neutral";
+      } else if (upProb > 0.42 && upProb > downProb + 0.05) {
+        badgeText = "⏹️ Steady Range (Up Tilt)";
+        badgeClass = "neutral";
+      } else {
+        badgeText = "⏹️ Steady / Rangebound";
+        badgeClass = "neutral";
+      }
     }
 
     badgeEl.textContent = badgeText;
     badgeEl.className = "card-direction-badge " + badgeClass;
 
-    if (num.forecast_rate) {
-      targetEl.textContent = "₹" + fmt(num.forecast_rate, 4);
-    } else {
-      targetEl.textContent = "₹" + fmt(report.usd_inr_close, 4);
+    // Target Rate Display
+    targetEl.textContent = "₹" + fmt(targetRate, 4);
+
+    // Delta Pill Display
+    if (deltaEl) {
+      const sign = diff >= 0 ? "+" : "";
+      deltaEl.textContent = sign + "₹" + fmt(diff, 2) + " (" + sign + fmt(diffPct, 2) + "%)";
+      deltaEl.className = "card-delta-pill " + deltaClass;
     }
 
+    // Trading Range
     if (int80.lower && int80.upper) {
-      rangeEl.textContent = "Expected Range: ₹" + fmt(int80.lower, 2) + " – ₹" + fmt(int80.upper, 2);
+      rangeEl.textContent = "Trading Range: ₹" + fmt(int80.lower, 2) + " – ₹" + fmt(int80.upper, 2);
     } else {
-      rangeEl.textContent = "Expected Range: Stable around current rate";
+      rangeEl.textContent = "Trading Range: Stable near ₹" + fmt(currentClose, 2);
     }
 
-    const confScore = (h.confidence && h.confidence.raw_top_class_score_pct) ? h.confidence.raw_top_class_score_pct : 65;
+    // Model Skew display
+    if (skewEl) {
+      if (h.model_probabilities) {
+        const pDown = fmt(Number(h.model_probabilities.DOWN || 0) * 100, 0) + "%";
+        const pFlat = fmt(Number(h.model_probabilities.FLAT || 0) * 100, 0) + "%";
+        const pUp = fmt(Number(h.model_probabilities.UP || 0) * 100, 0) + "%";
+        skewEl.textContent = "Model Skew: Down " + pDown + " · Flat " + pFlat + " · Up " + pUp;
+      } else {
+        skewEl.textContent = "Selected Model: " + (h.selected_model || "Macro Ensemble");
+      }
+    }
+
+    // Reliability meter
+    const confScore = (h.confidence && h.confidence.raw_top_class_score_pct) ? h.confidence.raw_top_class_score_pct : 60;
     confEl.textContent = fmt(confScore, 0) + "%";
     fillEl.style.width = Math.min(100, Math.max(10, confScore)) + "%";
+    fillEl.style.background = confScore >= 60 ? "var(--accent)" : (confScore >= 45 ? "var(--warn)" : "var(--bad)");
   });
 }
 
@@ -461,7 +504,7 @@ async function analyzeNews() {
   const b = $("analyze-button"); showBusy(b, true, "Analyzing news…");
   try {
     const model = $("ollama-model").value || "qwen2.5:7b";
-    const result = await api("/api/analyze-news", {method:"POST",body:JSON.stringify({model:model})});
+    const result = await api("/api/news/analyze", {method:"POST",body:JSON.stringify({model:model})});
     renderJson("news-result", result);
     notify(result.status === "ok" ? "Local-model commentary generated." : (result.message || "No analysis returned."));
   } catch (err) { notify("Local headline analysis unavailable: " + err.message, "error"); }

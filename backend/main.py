@@ -361,6 +361,7 @@ def news() -> dict[str, Any]:
 
 
 @app.post("/api/news/analyze")
+@app.post("/api/analyze-news")
 def analyze_news(request: NewsAnalysisRequest) -> dict[str, Any]:
     return analyze_with_local_ollama(request.model, request.max_records)
 

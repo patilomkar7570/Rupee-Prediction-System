@@ -55,18 +55,50 @@
 
       <!-- ================= TAB 1: EXECUTIVE SIMPLE FORECAST ================= -->
       <div id="simple-view" class="view-container">
-        <div class="simple-hero-card">
-          <div class="hero-rate-wrap">
-            <span class="hero-label">CURRENT EXCHANGE RATE (USD / INR)</span>
-            <div class="hero-rate-row">
-              <strong id="simple-usd-inr" class="hero-rate-value">₹—</strong>
-              <span id="simple-usd-change" class="change-badge">—</span>
+        <!-- UPPER BOXES: LIVE EXCHANGE RATE & MACRO SENTIMENT PRESSURE GAUGE -->
+        <div class="executive-top-grid">
+          <div class="simple-hero-card">
+            <div class="hero-rate-wrap">
+              <span class="hero-label">CURRENT EXCHANGE RATE (USD / INR)</span>
+              <div class="hero-rate-row">
+                <strong id="simple-usd-inr" class="hero-rate-value">₹—</strong>
+                <span id="simple-usd-change" class="change-badge">—</span>
+              </div>
+              <p id="simple-rate-meta" class="hero-meta">Historical data: 1,300 business days analyzed</p>
             </div>
-            <p id="simple-rate-meta" class="hero-meta">Historical data: 1,300 business days analyzed</p>
+            <div class="hero-actions">
+              <button id="simple-refresh-button" class="button primary pulse-btn" type="button">⚡ Run Analysis & Refresh</button>
+              <button id="simple-print-button" class="button secondary" type="button">📄 Print PDF Report</button>
+            </div>
           </div>
-          <div class="hero-actions">
-            <button id="simple-refresh-button" class="button primary pulse-btn" type="button">⚡ Run Analysis & Refresh</button>
-            <button id="simple-print-button" class="button secondary" type="button">📄 Print PDF Report</button>
+
+          <!-- MACRO SENTIMENT RESULT (UPPER BOX) -->
+          <div class="simple-gauge-panel">
+            <div class="gauge-header">
+              <div>
+                <span class="eyebrow">MACRO SENTIMENT ATTRIBUTION</span>
+                <h3>Rupee Macroeconomic Pressure Meter</h3>
+              </div>
+              <span id="simple-gauge-score" class="pill">Pressure Score: 0.0</span>
+            </div>
+            <div class="gauge-meter-track">
+              <div class="gauge-gradient"></div>
+              <div class="gauge-marker" id="simple-gauge-marker" style="left: 50%;"></div>
+            </div>
+            <div class="gauge-ticks">
+              <span class="support-tick">🟢 Rupee Support (Stronger INR)</span>
+              <span class="neutral-tick">⚪ Balanced / Neutral</span>
+              <span class="pressure-tick">🔴 Rupee Pressure (Weaker INR)</span>
+            </div>
+            <p id="simple-macro-summary" class="simple-summary-text">Macroeconomic indicators assessed.</p>
+          </div>
+        </div>
+
+        <!-- MULTI-HORIZON FORECAST CARDS -->
+        <div class="section-title">
+          <div>
+            <p class="eyebrow">AI PROJECTIONS</p>
+            <h2>Multi-Horizon USD/INR Forecasts</h2>
           </div>
         </div>
 
@@ -77,10 +109,16 @@
               <span class="badge-pill" id="badge-pill-1d">Next Session</span>
             </div>
             <div class="card-direction-badge neutral" id="simple-badge-1d">Analyzing…</div>
-            <div class="card-target-rate">Expected: <strong id="simple-target-1d">₹—</strong></div>
+            <div class="card-target-rate">
+              <div class="target-price-row">
+                <strong id="simple-target-1d">₹—</strong>
+                <span class="card-delta-pill neutral" id="simple-delta-1d">—</span>
+              </div>
+            </div>
             <div class="card-range" id="simple-range-1d">Trading Range: ₹— – ₹—</div>
+            <div class="card-skew" id="simple-skew-1d">Model Skew: Evaluating…</div>
             <div class="confidence-bar-wrap">
-              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-1d">—</strong></div>
+              <div class="confidence-label"><span>Signal Reliability:</span><strong id="simple-conf-1d">—</strong></div>
               <div class="confidence-track"><div class="confidence-fill" id="simple-fill-1d" style="width: 0%"></div></div>
             </div>
           </article>
@@ -91,10 +129,16 @@
               <span class="badge-pill highlight">Key Horizon</span>
             </div>
             <div class="card-direction-badge neutral" id="simple-badge-5d">Analyzing…</div>
-            <div class="card-target-rate">Expected: <strong id="simple-target-5d">₹—</strong></div>
+            <div class="card-target-rate">
+              <div class="target-price-row">
+                <strong id="simple-target-5d">₹—</strong>
+                <span class="card-delta-pill neutral" id="simple-delta-5d">—</span>
+              </div>
+            </div>
             <div class="card-range" id="simple-range-5d">Trading Range: ₹— – ₹—</div>
+            <div class="card-skew" id="simple-skew-5d">Model Skew: Evaluating…</div>
             <div class="confidence-bar-wrap">
-              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-5d">—</strong></div>
+              <div class="confidence-label"><span>Signal Reliability:</span><strong id="simple-conf-5d">—</strong></div>
               <div class="confidence-track"><div class="confidence-fill" id="simple-fill-5d" style="width: 0%"></div></div>
             </div>
           </article>
@@ -105,33 +149,19 @@
               <span class="badge-pill" id="badge-pill-20d">Monthly</span>
             </div>
             <div class="card-direction-badge neutral" id="simple-badge-20d">Analyzing…</div>
-            <div class="card-target-rate">Expected: <strong id="simple-target-20d">₹—</strong></div>
+            <div class="card-target-rate">
+              <div class="target-price-row">
+                <strong id="simple-target-20d">₹—</strong>
+                <span class="card-delta-pill neutral" id="simple-delta-20d">—</span>
+              </div>
+            </div>
             <div class="card-range" id="simple-range-20d">Trading Range: ₹— – ₹—</div>
+            <div class="card-skew" id="simple-skew-20d">Model Skew: Evaluating…</div>
             <div class="confidence-bar-wrap">
-              <div class="confidence-label"><span>Signal Reliability</span><strong id="simple-conf-20d">—</strong></div>
+              <div class="confidence-label"><span>Signal Reliability:</span><strong id="simple-conf-20d">—</strong></div>
               <div class="confidence-track"><div class="confidence-fill" id="simple-fill-20d" style="width: 0%"></div></div>
             </div>
           </article>
-        </div>
-
-        <div class="simple-gauge-panel">
-          <div class="gauge-header">
-            <div>
-              <span class="eyebrow">MACRO SENTIMENT</span>
-              <h3>Rupee Macroeconomic Pressure Meter</h3>
-            </div>
-            <span id="simple-gauge-score" class="pill">Pressure Score: 0.0</span>
-          </div>
-          <div class="gauge-meter-track">
-            <div class="gauge-gradient"></div>
-            <div class="gauge-marker" id="simple-gauge-marker" style="left: 50%;"></div>
-          </div>
-          <div class="gauge-ticks">
-            <span class="support-tick">🟢 Rupee Support (Strengthening)</span>
-            <span class="neutral-tick">⚪ Balanced / Neutral</span>
-            <span class="pressure-tick">🔴 Rupee Pressure (Weakening)</span>
-          </div>
-          <p id="simple-macro-summary" class="simple-summary-text">Macroeconomic indicators assessed.</p>
         </div>
 
         <div class="section-title">
