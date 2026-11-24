@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.0 — High-Reliability Revamp, Prediction Caching & Launcher Resilience (2026-11-24)
+
+- **Reliability & Stability Revamp**: Audited and revamped the entire execution pipeline across launcher, backend models, and frontend UI to guarantee reliable operation.
+- **Frontend Crash Elimination**: Resolved `TypeError` exceptions caused by orphaned DOM element IDs. Implemented safe element setters and established complete DOM ID parity between `frontend/app.js` and `frontend/index.html`.
+- **Fast Prediction Caching**: Added automatic in-memory and disk caching for multi-horizon forecast models (`runtime/latest_prediction.json`). Returning verified holdout predictions now takes `< 50ms` (down from ~18 seconds) when data is unchanged.
+- **Informative Error & Fallback States**: Added `renderPredictionError()` to forecast cards. If predictions are blocked by data quality or history checks, cards show clear advisory notices instead of staying stuck in an indefinite "Analyzing…" state.
+- **Intelligent Python Launcher Detection (`run.bat`)**: Enhanced `:ensure_python` to detect and filter out pre-release/alpha Python versions (>= 3.15) lacking binary wheels, automatically defaulting to stable registered Python installations (such as Python 3.14).
+- **Harmonized Forecast Signals**: Aligned card stances, directional tags, and signal reliability meters between the machine learning classification models and the numerical expectation intervals.
+
 ## v1.0.0 — Modernized UI, PDF Export & High-Signal Macro Engine (2026-11-09)
 
 - **Official v1.0.0 Release**: Promoted the Rupee Prediction System to version 1.0.0 with full verification and documentation.

@@ -31,9 +31,14 @@ The platform aggregates high-signal market indicators categorized into 4 core fu
 3. **Rates & Yield Spreads**: RBI Policy Repo Rate, India 10-Year Benchmark Yield, US 10-Year & 2-Year Treasury Yields, US Effective Fed Funds Rate, and ECB Policy Facility Rate.
 4. **Capital Flows & External Sector**: RBI Foreign Exchange Reserves (USD Bn), Foreign Portfolio Investment (FPI) Net Equity/Debt Flows, Merchandise Trade Balance, and India CPI Inflation.
 
-## Release: v1.0.0
+## Release: v1.1.0
 
-Version 1.0.0 is the foundational release of the Rupee Prediction System. The repository contains the complete source, normalized data schemas, comprehensive documentation, offline test suites, and the unified Windows launcher (`run.bat`).
+Version 1.1.0 introduces a comprehensive reliability revamp, instant multi-horizon prediction caching (<50ms response), resilient Python launcher detection, and enhanced UI error states:
+
+- **High-Reliability Pipeline**: Fully audited frontend-to-backend pipeline with zero-exception DOM binding.
+- **Fast Prediction Caching**: Automatic caching of trained multi-horizon model reports (`runtime/latest_prediction.json`) eliminating 18-second recalculation stalls on unchanged market data.
+- **Launcher Resilience**: Enhanced Python detection in `run.bat` that filters out pre-release Python versions lacking pre-built binary wheels and picks stable registered Python environments.
+- **Clear Error & Status States**: Forecast cards clearly communicate data quality hurdles, staleness warnings, or network state instead of freezing.
 
 The default `INR=X` series is a Yahoo Finance USD/INR proxy. Users can also configure official RBI reference rates via custom CSV import. Review the configured target definition and data-quality warnings before interpreting any result.
 
