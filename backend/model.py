@@ -13,7 +13,10 @@ from .probability_calibration import CLASS_ORDER, align_probabilities, fit_proba
 from .risk_features import detect_regime, detect_feature_drift
 from .numerical_forecast import run_numerical_forecast
 import concurrent.futures
+import json
 from .evaluation_uncertainty import balanced_accuracy_interval, balanced_accuracy_difference_interval
+from .paths import LATEST_PREDICTION_FILE, ensure_runtime_layout
+from .target_source import get_target_source
 
 MODEL_CANDIDATES = ["Market-price Logistic", "Macro Logistic", "Macro Random Forest", "Macro Gradient Boosting"]
 HORIZONS = (1, 5, 20)
@@ -146,10 +149,27 @@ def _fit_and_predict_holdout(frame: pd.DataFrame, horizon: int) -> tuple[dict[st
     return result, selection_report
 
 
-def predict_next_session() -> dict[str, Any]:
+def predict_next_session(force: bool = False) -> dict[str, Any]:
     prices = load_price_data()
     if len(prices) < 400:
         raise ValueError(f"Only {len(prices)} daily rows are available. Fetch more history; v4 recommends at least 400 rows for multi-horizon testing.")
+    latest_date_str = prices.index[-1].strftime("%Y-%m-%d")
+    current_target_source = get_target_source()
+    if not force and LATEST_PREDICTION_FILE.exists():
+        try:
+            cached = json.loads(LATEST_PREDICTION_FILE.read_text(encoding="utf-8"))
+            if (
+                isinstance(cached, dict)
+                and cached.get("as_of_date") == latest_date_str
+                and cached.get("usable_rows") == len(prices)
+                and cached.get("target_source") == current_target_source
+                and "horizons" in cached
+                and len(cached["horizons"]) == len(HORIZONS)
+            ):
+                return cached
+        except Exception:
+            pass
+
     def _compute_single_horizon(h: int) -> dict[str, Any]:
         frame = make_feature_frame(prices, h)
         report, _ = _fit_and_predict_holdout(frame, h)
@@ -166,7 +186,7 @@ def predict_next_session() -> dict[str, Any]:
     rate = float(prices["USDINR"].iloc[-1])
     prior = float(prices["USDINR"].iloc[-2]) if len(prices) > 1 else None
     daily_change = (rate / prior - 1) * 100 if prior else None
-    return {
+    report = {
         "prediction": primary["prediction"],
         "model_prediction": primary["model_prediction"],
         "selected_model": primary["selected_model"],
@@ -191,7 +211,14 @@ def predict_next_session() -> dict[str, Any]:
         "usd_inr_close": round(rate, 4),
         "daily_change_pct": round(float(daily_change), 4) if daily_change is not None else None,
         "usable_rows": int(len(prices)),
+        "target_source": current_target_source,
         "feature_sources": [c for c in prices.columns if prices[c].notna().sum() >= 30 and c != "USDINR"],
         "note": "v4.0 selects classification and numerical models on earlier chronological windows, calibrates probabilities/interval residuals on a separate later window, and evaluates on a later untouched holdout. It does not select models on the holdout. Point-in-time macro vintage coverage remains incomplete; predictions are experimental and may not generalize to future regimes.",
         "probability_note": "Probabilities are calibrated only when the separate calibration window had enough observations across all classes; otherwise raw class estimates are shown. They are not guaranteed odds. 'No reliable signal' is emitted when the model has not shown enough out-of-sample evidence against a selected simple baseline.",
     }
+    ensure_runtime_layout()
+    try:
+        LATEST_PREDICTION_FILE.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+    except Exception:
+        pass
+    return report

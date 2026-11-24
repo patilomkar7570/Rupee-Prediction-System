@@ -118,6 +118,22 @@ if not defined PYTHON_EXE (
     for /f "delims=" %%P in ('python -c "import sys; print(sys.executable)" 2^>nul') do set "PYTHON_EXE=%%P"
   )
 )
+rem If selected python is an unreleased or alpha build (>= 3.15) where binary wheels are not distributed,
+rem select the latest stable registered python release.
+if defined PYTHON_EXE (
+  "%PYTHON_EXE%" -c "import sys; sys.exit(0 if sys.version_info < (3, 15) else 1)" 2>nul
+  if errorlevel 1 (
+    where py >nul 2>nul
+    if not errorlevel 1 (
+      for /f "tokens=2 delims=*" %%A in ('py -0p 2^>nul ^| findstr /r /c:"3\.[0-9][0-9]* "') do (
+        for /f "tokens=*" %%E in ("%%A") do (
+          "%%E" -c "import sys; sys.exit(0 if sys.version_info < (3, 15) and sys.version_info >= (3, 10) else 1)" 2>nul
+          if not errorlevel 1 set "PYTHON_EXE=%%E"
+        )
+      )
+    )
+  )
+)
 if not defined PYTHON_EXE (
   echo ERROR: Python was not found.
   echo Install Python and enable the Python Launcher or Add Python to PATH.

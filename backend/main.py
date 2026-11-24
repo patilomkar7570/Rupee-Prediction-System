@@ -170,6 +170,12 @@ def data_quality_csv() -> FileResponse:
 @app.post("/api/refresh")
 def refresh() -> dict[str, Any]:
     try:
+        from .paths import LATEST_PREDICTION_FILE
+        if LATEST_PREDICTION_FILE.exists():
+            try:
+                LATEST_PREDICTION_FILE.unlink()
+            except Exception:
+                pass
         prices = collect_market_data(period="5y")
         data = overview()
         data["message"] = f"Refreshed {len(prices):,} aligned business-day rows. Review source status and latest dates; optional feeds can fail independently."
@@ -179,7 +185,7 @@ def refresh() -> dict[str, Any]:
 
 
 @app.post("/api/predict")
-def predict() -> dict[str, Any]:
+def predict(force: bool = Query(default=False)) -> dict[str, Any]:
     try:
         prices = load_price_data()
         quality = audit_market_data(prices, read_source_status(), get_target_source())
@@ -187,7 +193,7 @@ def predict() -> dict[str, Any]:
         blocking = [item for item in quality.get("issues", []) if item.get("code") in blocking_codes]
         if blocking:
             raise HTTPException(status_code=409, detail="Forecast blocked by data-quality checks: " + " ".join(item.get("message", "") for item in blocking[:4]))
-        report = predict_next_session()
+        report = predict_next_session(force=force)
         report["data_quality_gate"] = {"status": quality.get("release_gate"), "point_in_time_flags": len(quality.get("point_in_time_review_flags", [])), "note": "The gate checks data integrity and obvious staleness; it does not certify point-in-time availability or forecasting skill."}
         return report
     except HTTPException:

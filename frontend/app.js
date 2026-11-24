@@ -14,11 +14,19 @@ function escapeHtml(value) {
 
 function fmt(value, digits) {
   if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "—";
-  return Number(value).toLocaleString(undefined, {minimumFractionDigits: digits == null ? 2 : digits, maximumFractionDigits: digits == null ? 2 : digits});
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: digits == null ? 2 : digits,
+    maximumFractionDigits: digits == null ? 2 : digits
+  });
 }
 
 function pct(value) {
   return value === null || value === undefined || !Number.isFinite(Number(value)) ? "—" : fmt(value, 2) + "%";
+}
+
+function setTxt(id, val) {
+  const el = $(id);
+  if (el) el.textContent = val == null || val === "" ? "—" : val;
 }
 
 function notify(message, kind) {
@@ -95,7 +103,6 @@ function filterHistoryByDays(history, days) {
 function updateChartWithTimeframe(days) {
   activeDays = days;
   const sliced = filterHistoryByDays(cachedHistory, activeDays);
-  drawSvgChart("chart", "history-label", cachedHistory);
   drawSvgChart("simple-chart", "simple-history-label", sliced);
 }
 
@@ -107,47 +114,38 @@ function renderChart(history) {
 }
 
 function renderOverview(data) {
-  const fields = ["rbi-repo", "india-10y", "fx-reserves", "india-cpi", "trade-balance", "fpi-flows"];
   if (!data || !data.data_available) {
-    $("usd-inr").textContent = "—";
-    $("rate-date").textContent = "No data loaded";
-    if ($("simple-usd-inr")) $("simple-usd-inr").textContent = "₹—";
-    if ($("simple-usd-change")) $("simple-usd-change").textContent = "No data loaded";
-    $("regime").textContent = "Not assessed";
-    $("regime-note").textContent = data && data.message ? data.message : "Click Run Analysis & Refresh to collect market history.";
-    fields.forEach(function (f) { const el = $(f); if (el) el.textContent = "—"; });
+    setTxt("simple-usd-inr", "₹—");
+    setTxt("simple-usd-change", "No data loaded");
+    setTxt("simple-rate-meta", data && data.message ? data.message : "Click Run Analysis & Refresh to collect market history.");
     hasData = false;
     if (data && data.sources) renderSources(data.sources);
     return;
   }
   hasData = true;
 
-  // Overview metrics
-  $("usd-inr").textContent = "₹" + fmt(data.usd_inr, 4);
-  $("rate-date").textContent = (data.latest_date || "Latest date unavailable") + " · " + fmt(data.rows, 0) + " sessions";
-  $("brent").textContent = data.brent == null ? "—" : "$" + fmt(data.brent, 2);
-  $("gold").textContent = data.gold == null ? "—" : "$" + fmt(data.gold, 2);
-  $("dxy").textContent = fmt(data.dxy, 2);
-  $("us10y").textContent = data.us10y == null ? "—" : fmt(data.us10y, 3) + "%";
-  $("vix").textContent = fmt(data.vix, 2);
-  const rbiRepo = $("rbi-repo"); if (rbiRepo) rbiRepo.textContent = data.rbi_repo == null ? "—" : fmt(data.rbi_repo, 2) + "%";
-  const in10y = $("india-10y"); if (in10y) in10y.textContent = data.india_10y == null ? "—" : fmt(data.india_10y, 2) + "%";
-  const fxRes = $("fx-reserves"); if (fxRes) fxRes.textContent = data.fx_reserves == null ? "—" : "$" + fmt(data.fx_reserves, 1) + "B";
-  const inCpi = $("india-cpi"); if (inCpi) inCpi.textContent = data.india_cpi == null ? "—" : fmt(data.india_cpi, 2) + "%";
-  const tb = $("trade-balance"); if (tb) tb.textContent = data.trade_balance == null ? "—" : "$" + fmt(data.trade_balance, 1) + "B";
-  const fpi = $("fpi-flows"); if (fpi) fpi.textContent = data.fpi_flows == null ? "—" : (data.fpi_flows >= 0 ? "+$" : "-$") + fmt(Math.abs(data.fpi_flows), 2) + "B";
-  const regime = data.market_regime || {};
-  $("regime").textContent = regime.label || "Not assessed";
-  $("regime-note").textContent = regime.description || "No regime description available.";
-  $("target-note").textContent = "Target: " + (data.target_source || "not configured") + ". Auto-updates when changed.";
+  // Simple Hero Banner
+  setTxt("simple-usd-inr", "₹" + fmt(data.usd_inr, 4));
+  if ($("simple-usd-change")) {
+    const chg = data.daily_change_pct;
+    if (chg != null) {
+      const sign = chg >= 0 ? "+" : "";
+      $("simple-usd-change").textContent = sign + fmt(chg, 2) + "% today";
+      $("simple-usd-change").className = "change-badge " + (chg > 0 ? "positive" : "negative");
+    } else {
+      $("simple-usd-change").textContent = "Market steady";
+      $("simple-usd-change").className = "change-badge";
+    }
+  }
+  setTxt("simple-rate-meta", "As of " + (data.latest_date || "Today") + " · " + fmt(data.rows, 0) + " historical sessions analyzed");
 
-  // Sync target select
+  // Sync target select & note
   if ($("target-source") && data.target_source) {
     $("target-source").value = data.target_source;
   }
+  setTxt("target-note", "Target: " + (data.target_source || "not configured") + ". Auto-updates when changed.");
 
   // Populate Macroeconomic Groups Tab
-  const setTxt = function (id, val) { const el = $(id); if (el) el.textContent = val; };
   setTxt("grp-dxy", data.dxy == null ? "—" : fmt(data.dxy, 2));
   setTxt("grp-usdcnh", data.usdcnh == null ? "—" : fmt(data.usdcnh, 4));
   setTxt("grp-vix", data.vix == null ? "—" : fmt(data.vix, 2));
@@ -167,35 +165,16 @@ function renderOverview(data) {
   setTxt("grp-trade-balance", data.trade_balance == null ? "—" : (data.trade_balance >= 0 ? "+$" : "-$") + fmt(Math.abs(data.trade_balance), 2) + "B");
   setTxt("grp-india-cpi", data.india_cpi == null ? "—" : fmt(data.india_cpi, 2) + "%");
 
-  // Simple Hero Banner
-  if ($("simple-usd-inr")) $("simple-usd-inr").textContent = "₹" + fmt(data.usd_inr, 4);
-  if ($("simple-usd-change")) {
-    const chg = data.daily_change_pct;
-    if (chg != null) {
-      const sign = chg >= 0 ? "+" : "";
-      $("simple-usd-change").textContent = sign + fmt(chg, 2) + "% today";
-      $("simple-usd-change").className = "change-badge " + (chg > 0 ? "positive" : "negative");
-    } else {
-      $("simple-usd-change").textContent = "Market steady";
-      $("simple-usd-change").className = "change-badge";
-    }
-  }
-  if ($("simple-rate-meta")) {
-    $("simple-rate-meta").textContent = "As of " + (data.latest_date || "Today") + " · " + fmt(data.rows, 0) + " historical sessions analyzed";
-  }
-
   // Simple Sentiment Gauge & Key Drivers
   if (data.factor_analysis) {
     const fa = data.factor_analysis;
     const score = Number(fa.pressure_score) || 0;
-    if ($("simple-gauge-score")) $("simple-gauge-score").textContent = "Pressure Score: " + (score > 0 ? "+" : "") + fmt(score, 1);
+    setTxt("simple-gauge-score", "Pressure Score: " + (score > 0 ? "+" : "") + fmt(score, 1));
     if ($("simple-gauge-marker")) {
       const markerPct = Math.min(95, Math.max(5, (score + 100) / 2));
       $("simple-gauge-marker").style.left = markerPct + "%";
     }
-    if ($("simple-macro-summary")) {
-      $("simple-macro-summary").textContent = fa.human_summary || fa.pressure_detail || "Macro conditions assessed.";
-    }
+    setTxt("simple-macro-summary", fa.human_summary || fa.pressure_detail || "Macro conditions assessed.");
     renderSimpleDrivers(fa.key_market_drivers || []);
   }
 
@@ -241,11 +220,14 @@ function renderForecasts(report) {
   if ($("record-shadow")) $("record-shadow").disabled = horizons.length !== 3;
 
   // 1. Render Advanced Technical Forecast Grid
-  $("forecast-grid").innerHTML = horizons.map(function (h) {
-    const cls = h.prediction === "UP" ? "up" : h.prediction === "DOWN" ? "down" : "neutral";
-    const pctVal = h.model_probabilities ? Math.max(Number(h.model_probabilities.UP || 0), Number(h.model_probabilities.FLAT || 0), Number(h.model_probabilities.DOWN || 0)) * 100 : null;
-    return '<article class="forecast"><span>' + escapeHtml(h.horizon_days + " session" + (h.horizon_days === 1 ? "" : "s")) + '</span><strong class="' + cls + '">' + escapeHtml(h.prediction || "—") + '</strong><small>' + escapeHtml(h.selected_model || "Model unavailable") + '</small><small>Top class estimate: ' + pct(pctVal) + '</small><small>Holdout balanced accuracy: ' + pct(h.test_metrics && h.test_metrics.balanced_accuracy_pct) + '</small></article>';
-  }).join("") || '<p class="muted">The backend returned no horizon results.</p>';
+  const grid = $("forecast-grid");
+  if (grid) {
+    grid.innerHTML = horizons.map(function (h) {
+      const cls = h.prediction === "UP" ? "up" : h.prediction === "DOWN" ? "down" : "neutral";
+      const pctVal = h.model_probabilities ? Math.max(Number(h.model_probabilities.UP || 0), Number(h.model_probabilities.FLAT || 0), Number(h.model_probabilities.DOWN || 0)) * 100 : null;
+      return '<article class="forecast"><span>' + escapeHtml(h.horizon_days + " session" + (h.horizon_days === 1 ? "" : "s")) + '</span><strong class="' + cls + '">' + escapeHtml(h.prediction || "—") + '</strong><small>' + escapeHtml(h.selected_model || "Model unavailable") + '</small><small>Top class estimate: ' + pct(pctVal) + '</small><small>Holdout balanced accuracy: ' + pct(h.test_metrics && h.test_metrics.balanced_accuracy_pct) + '</small></article>';
+    }).join("") || '<p class="muted">The backend returned no horizon results.</p>';
+  }
 
   const details = {
     as_of_date: report.as_of_date, usd_inr_close: report.usd_inr_close,
@@ -283,7 +265,6 @@ function renderForecasts(report) {
     const diffPct = currentClose > 0 ? (diff / currentClose) * 100 : 0;
 
     // Harmonized stance calculation:
-    // When projected change is minimal (< 0.08%), it is economically rangebound/steady
     let badgeText = "⏹️ Steady / Rangebound";
     let badgeClass = "neutral";
     let deltaClass = "neutral";
@@ -345,10 +326,46 @@ function renderForecasts(report) {
 
     // Reliability meter
     const confScore = (h.confidence && h.confidence.raw_top_class_score_pct) ? h.confidence.raw_top_class_score_pct : 60;
-    confEl.textContent = fmt(confScore, 0) + "%";
-    fillEl.style.width = Math.min(100, Math.max(10, confScore)) + "%";
-    fillEl.style.background = confScore >= 60 ? "var(--accent)" : (confScore >= 45 ? "var(--warn)" : "var(--bad)");
+    if (confEl) confEl.textContent = fmt(confScore, 0) + "%";
+    if (fillEl) {
+      fillEl.style.width = Math.min(100, Math.max(10, confScore)) + "%";
+      fillEl.style.background = confScore >= 60 ? "var(--accent)" : (confScore >= 45 ? "var(--warn)" : "var(--bad)");
+    }
   });
+}
+
+function renderPredictionError(message) {
+  [1, 5, 20].forEach(function (d) {
+    const badgeEl = $("simple-badge-" + d + "d");
+    const targetEl = $("simple-target-" + d + "d");
+    const deltaEl = $("simple-delta-" + d + "d");
+    const rangeEl = $("simple-range-" + d + "d");
+    const skewEl = $("simple-skew-" + d + "d");
+    const confEl = $("simple-conf-" + d + "d");
+    const fillEl = $("simple-fill-" + d + "d");
+
+    if (badgeEl) {
+      badgeEl.textContent = "⚠️ Awaiting Refresh";
+      badgeEl.className = "card-direction-badge neutral";
+    }
+    if (targetEl) targetEl.textContent = "₹—";
+    if (deltaEl) {
+      deltaEl.textContent = "Click Run Analysis";
+      deltaEl.className = "card-delta-pill neutral";
+    }
+    if (rangeEl) rangeEl.textContent = "Forecast requires fresh market history.";
+    if (skewEl) skewEl.textContent = message ? String(message).slice(0, 90) : "Awaiting data refresh";
+    if (confEl) confEl.textContent = "0%";
+    if (fillEl) {
+      fillEl.style.width = "0%";
+      fillEl.style.background = "var(--warn)";
+    }
+  });
+
+  const grid = $("forecast-grid");
+  if (grid) {
+    grid.innerHTML = '<p class="muted">Forecast paused: ' + escapeHtml(message || "Data refresh required.") + '</p>';
+  }
 }
 
 function renderFactorAudit(data) {
@@ -376,12 +393,16 @@ function renderQuality(report) {
   $("quality-result").innerHTML = head + issueHtml + pitHtml + '<p class="footnote"><a href="/api/data-quality.csv">Download quality audit CSV ↗</a></p>';
 }
 
-async function runPrediction() {
+async function runPrediction(force) {
   try {
-    const report = await api("/api/predict", {method:"POST"});
+    const path = force ? "/api/predict?force=true" : "/api/predict";
+    const report = await api(path, {method:"POST"});
     renderForecasts(report);
+    return report;
   } catch (err) {
     console.warn("Prediction update skipped:", err.message);
+    renderPredictionError(err.message);
+    throw err;
   }
 }
 
@@ -442,18 +463,30 @@ async function runAllAnalysis() {
   notify("Fetching latest market feeds…", "warning");
 
   try {
-    const data = await api("/api/refresh", {method:"POST"});
+    let data;
+    try {
+      data = await api("/api/refresh", {method:"POST"});
+    } catch (refreshErr) {
+      console.warn("Live refresh failed; reading current data:", refreshErr.message);
+      data = await api("/api/overview");
+      notify("Live refresh unavailable (" + refreshErr.message + "). Using loaded local history.", "warning");
+    }
     renderOverview(data);
 
     notify("Running multi-horizon AI forecasts and macro audits…", "warning");
-    await Promise.allSettled([
-      runPrediction(),
+    const results = await Promise.allSettled([
+      runPrediction(true),
       runFactorAudit(),
       runQualityAudit(),
       refreshNews(),
       loadShadowLedger()
     ]);
-    notify("Analysis complete! All market data, forecasts, and macro drivers updated.", "success");
+    const predFailed = results[0].status === "rejected";
+    if (predFailed) {
+      notify("Market feeds loaded, but forecast was blocked by data quality or history checks. See Quality Gate.", "warning");
+    } else {
+      notify("Analysis complete! All market data, forecasts, and macro drivers updated.", "success");
+    }
   } catch (err) {
     notify("Update failed: " + err.message, "error");
   } finally {
@@ -469,7 +502,7 @@ async function loadInitialData() {
     if (data.data_available) {
       notify("Loading current forecasts and macro assessments…");
       await Promise.allSettled([
-        runPrediction(),
+        runPrediction(false),
         runFactorAudit(),
         runQualityAudit(),
         refreshNews(),
@@ -477,9 +510,11 @@ async function loadInitialData() {
       ]);
       notify("Workspace ready. All forecasts and macroeconomic drivers loaded.", "success");
     } else {
+      renderPredictionError("Click 'Run Analysis & Refresh' to download market history.");
       notify("No local data yet. Click 'Run Analysis & Refresh' to start.", "warning");
     }
   } catch (err) {
+    renderPredictionError(err.message);
     notify("Could not load workspace: " + err.message, "error");
   }
 }
@@ -533,7 +568,6 @@ function initTabs() {
   const navSimple = $("nav-simple");
   const navGroups = $("nav-groups");
   const navAdvanced = $("nav-advanced");
-  const navOverview = $("nav-overview");
 
   function setMode(mode) {
     if (tabSimple) tabSimple.classList.toggle("active", mode === "simple");
@@ -547,7 +581,6 @@ function initTabs() {
     if (navSimple) navSimple.classList.toggle("active", mode === "simple");
     if (navGroups) navGroups.classList.toggle("active", mode === "groups");
     if (navAdvanced) navAdvanced.classList.toggle("active", mode === "advanced");
-    if (navOverview) navOverview.classList.toggle("active", mode === "advanced");
   }
 
   if (tabSimple) tabSimple.addEventListener("click", () => setMode("simple"));
@@ -575,7 +608,7 @@ function initTabs() {
       window.scrollTo({top: 0, behavior: "smooth"});
     });
   }
-  ["overview", "forecasts", "factors", "evaluation", "quality", "sources", "news", "shadow"].forEach(function (sec) {
+  ["factors", "evaluation", "quality", "sources", "shadow"].forEach(function (sec) {
     const link = $("nav-" + sec);
     if (link) {
       link.addEventListener("click", function () {
@@ -592,11 +625,14 @@ function initTabs() {
 function initTheme() {
   const saved = localStorage.getItem("rps-theme");
   if (saved === "light") document.documentElement.dataset.theme = "light";
-  $("theme-button").addEventListener("click", function () {
-    const light = document.documentElement.dataset.theme !== "light";
-    document.documentElement.dataset.theme = light ? "light" : "dark";
-    localStorage.setItem("rps-theme", light ? "light" : "dark");
-  });
+  const themeBtn = $("theme-button");
+  if (themeBtn) {
+    themeBtn.addEventListener("click", function () {
+      const light = document.documentElement.dataset.theme !== "light";
+      document.documentElement.dataset.theme = light ? "light" : "dark";
+      localStorage.setItem("rps-theme", light ? "light" : "dark");
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
